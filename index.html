@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Nendome</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Comfortaa:wght@700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" defer></script>
 <style>
@@ -440,6 +440,41 @@ body.pdrag,body.pdrag *{cursor:grabbing!important;user-select:none}
 .catpop button.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700;margin-top:4px}
 .catpasos li small{margin-top:2px}
 @media (max-width:1500px){header{gap:7px;padding:0 12px}.logo{font-size:24px}.tab{padding:6px 10px}}
+
+/* ---------- estados nuevos, campos que faltan, mes y envío ---------- */
+.estado#fEstado{grid-template-columns:repeat(4,1fr)!important;gap:5px}
+.f.miss>label{color:#d6453a;font-weight:700}
+.f.miss input,.f.miss select,.f.miss .fdate input{border-color:#eba59c;background:#fff6f5}
+#imgBox.miss{border-color:#e8968c}
+#imgBox.miss .plus,#imgBox.miss .t{color:#d6453a}
+.mescombo{position:relative;min-width:0}
+.mescombo input{width:100%;border:1px solid var(--line);border-radius:10px;padding:8px 22px 8px 8px;font:inherit;font-size:14px;background:#fff;color:var(--ink);outline:0;min-width:0}
+.f.miss .mescombo input{border-color:#eba59c;background:#fff6f5}
+.mescombo input:focus{border-color:var(--accent)}
+.mescombo button{position:absolute;right:2px;top:50%;transform:translateY(-50%);border:0;background:none;color:var(--muted);cursor:pointer;font-size:12px;padding:4px 6px}
+.mesdrop{display:none;position:absolute;left:0;top:calc(100% + 4px);z-index:20;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 10px 26px rgba(59,51,48,.15);padding:4px;width:150px;max-height:260px;overflow:auto}
+.mesdrop.on{display:block}
+.mesdrop button{position:static;transform:none;display:block;width:100%;text-align:left;font-size:13px;color:var(--ink);padding:6px 8px;border-radius:7px}
+.mesdrop button:hover{background:var(--bg)}
+.fdate{grid-template-columns:46px 1fr 64px}
+.chks{display:flex;flex-direction:column;gap:2px}
+.chks small{color:var(--muted);font-size:11px}
+/* ---------- Comfortaa en logo, encabezados y títulos ---------- */
+.logo,.glogo,.shelf-head .n,.modal h2,.pophead h2,.lcol-h .t,.dhead h2,.sech,.anyoh,.ytab,.ymh,.card h3,.cath b,.mch,.pgh b,.dlgt{font-family:'Comfortaa',sans-serif;font-weight:700;letter-spacing:0}
+.logo{font-size:22px;letter-spacing:-.3px}
+.glogo{font-size:34px}
+.shelf-head .n{font-size:15px}
+.shelf.narrow .shelf-head .n{font-size:11px}
+.modal h2,.pophead h2{font-size:21px}
+.lcol-h .t{font-size:16px}
+.dhead h2{font-size:23px}
+.sech.big{font-size:19px;font-weight:700}
+.anyoh{font-size:15px}
+.ytab{font-size:16px;padding:9px 22px 7px}
+.ytab.on{font-size:20px;padding:9px 28px 7px}
+.ymh{font-size:15px;text-transform:capitalize}
+.card h3{font-size:14px}
+@media (max-width:1500px){.logo{font-size:20px}}
 </style>
 </head>
 <body>
@@ -511,7 +546,7 @@ body.pdrag,body.pdrag *{cursor:grabbing!important;user-select:none}
 <div id="marquee"></div>
 <div id="tip"></div>
 <div id="gate" class="gate on"><div class="gbox" id="gbox"><div class="glogo">Nendome</div><div class="gmsg">Cargando…</div></div></div>
-<div id="selbar"><span id="selText"></span><button data-st="quiero">♥ Lo quiero</button><button data-st="reservada">€ Reservada</button><button data-st="enviada">➜ En camino</button><button data-st="casa">✓ En casa</button><button data-st="">Sin marca</button><button id="selToTray">Mandar a «sin colocar»</button><button id="selClear">Quitar selección</button></div>
+<div id="selbar"><span id="selText"></span><button data-st="quiero">♥ Quiero</button><button data-st="reservada">R Reservada</button><button data-st="pagado">€ Pagada</button><button data-st="warehouse">W Warehouse</button><button data-st="enviada">➜ En camino</button><button data-st="casa">✓ En casa</button><button data-st="">Sin marca</button><button id="selToTray">Mandar a «sin colocar»</button><button id="selClear">Quitar selección</button></div>
 <div id="help"><b>Clic</b> seleccionar · <b>Mayús+clic</b> añadir a la selección · <b>Mayús+arrastrar</b> recuadro<br><b>Arrastrar título</b> mover estantería · <b>Arrastrar fondo</b> mover vista · <b>Rueda</b> zoom · <b>Doble clic</b> editar · <b>♥ ⏳ ✓ !</b> filtros junto al buscador · <b>Ctrl+Z</b> deshacer</div>
 <div id="toast"></div>
 
@@ -541,7 +576,7 @@ body.pdrag,body.pdrag *{cursor:grabbing!important;user-select:none}
           <div class="f"><label>Nombre</label><input id="fName" placeholder="Nendoroid Reg"></div>
         </div>
         <div class="f"><label>Serie (anime, película o juego)</label><input id="fSerie" placeholder=""></div>
-        <div class="f"><label>Estado</label><div class="estado" id="fEstado"><button data-st="">Sin marca</button><button data-st="quiero">♥ Lo quiero</button><button data-st="reservada">€ Reservada</button><button data-st="enviada">➜ En camino</button><button data-st="casa">✓ En casa</button></div></div>
+        <div class="f"><label>Estado</label><div class="estado" id="fEstado"><button data-st="">Sin marca</button><button data-st="quiero">♥ Lo quiero</button><button data-st="reservada">R Reservada</button><button data-st="pagado">€ Pagada</button><button data-st="warehouse">W Warehouse</button><button data-st="enviada">➜ En camino</button><button data-st="casa">✓ En casa</button></div></div>
         <div class="f"><label>Etiquetas (separa con comas o #)</label><input id="fTags" placeholder="#medieval #fantasía"><div class="chips" id="chips"></div></div>
         <button type="button" class="btn copybtn" id="fCopy" title="Copia «Nº de pedido - Nombre» para pedir a la tienda"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></svg> Copiar info para pedido</button>
         <div class="falta" id="fFalta"></div>
@@ -554,7 +589,7 @@ body.pdrag,body.pdrag *{cursor:grabbing!important;user-select:none}
           <div class="f"><label>Lanzamiento</label><input id="fLanz" type="date"></div>
         </div>
         <div class="row2" style="grid-template-columns:1.4fr 1fr">
-          <div class="f"><label>Fecha de compra</label><div class="fdate"><input id="fCD" placeholder="día" inputmode="numeric" maxlength="2"><select id="fCM"><option value="">mes</option><option value="01">ene</option><option value="02">feb</option><option value="03">mar</option><option value="04">abr</option><option value="05">may</option><option value="06">jun</option><option value="07">jul</option><option value="08">ago</option><option value="09">sep</option><option value="10">oct</option><option value="11">nov</option><option value="12">dic</option></select><input id="fCY" placeholder="año" inputmode="numeric" maxlength="4"></div></div>
+          <div class="f"><label>Fecha de compra</label><div class="fdate"><input id="fCD" placeholder="día" inputmode="numeric" maxlength="2"><div class="mescombo"><input id="fCM" placeholder="mes" autocomplete="off"><button type="button" id="fCMbtn" tabindex="-1">▾</button><div class="mesdrop" id="fCMdrop"></div></div><input id="fCY" placeholder="año" inputmode="numeric" maxlength="4"></div></div>
           <div class="f"><label>Condición</label><select id="fCond"><option value="">—</option><option value="nueva">Nueva</option><option value="segunda">Segunda mano</option></select></div>
         </div>
         <div class="row2" style="grid-template-columns:1fr 1fr">
@@ -609,7 +644,10 @@ const CAT_BY_ID = Object.fromEntries(CATALOGO.map(r => [String(r[0]), r]));
 
 /* ===================== ESTADO ===================== */
 const KEY = 'nendoboard-v1';
-const ESTADOS = { quiero: '♥ Lo quiero', reservada: '€ Reservada', enviada: '➜ En camino', casa: '✓ En casa' };
+const ESTADOS = { quiero: '♥ Lo quiero', reservada: 'R Reservada', pagado: '€ Pagada', warehouse: 'W Warehouse', enviada: '➜ En camino', casa: '✓ En casa' };
+// icono, color y nombre de cada estado (orden: reservada → pagada → warehouse → en camino → en casa)
+const ICO = { reservada: ['R', '#d98a00', 'Reservada'], pagado: ['€', '#0f9d8a', 'Pagada'], warehouse: ['W', '#7b5cd6', 'Warehouse'], enviada: ['➜', '#2a78d6', 'En camino'], casa: ['✓', '#2fa84f', 'En casa'] };
+const PEND = ['reservada', 'pagado', 'warehouse', 'enviada'], COMPRADO = [...PEND, 'casa'];
 // la imagen que pegas tú (imgUser) manda siempre sobre la importada (GoodSmile o Excel)
 const imgSrc = f => f.imgUser ? f.imgUser : !f.img ? '' : f.img.startsWith('xl:') ? (XLPICS[f.img.slice(3)] ? 'data:image/jpeg;base64,' + XLPICS[f.img.slice(3)] : '') : f.img;
 const W = 58, H = 84;
@@ -708,25 +746,29 @@ let toastT;
 function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), 2200); }
 
 /* ===================== DATOS QUE FALTAN ===================== */
-const sinNumeroOK = n => /^Nendoroid (More|Surprise)/i.test(n || '');
+const sinNumeroOK = n => /^(Nendoroid\s+)?(More|Surprise)/i.test(n || '');
+// qué hay que rellenar según el estado (con «sin marca» no se pide nada)
+const ETAPA_CAMPOS = [
+  { estados: ['quiero', ...COMPRADO], campos: ['imagen', 'numero', 'nombre', 'serie', 'genero', 'lanzamiento', 'precioJPY'] },
+  { estados: COMPRADO, campos: ['tienda', 'condicion', 'compra', 'estimado', 'pedido'] },
+  { estados: ['pagado', 'warehouse', 'enviada', 'casa'], campos: ['pagado'] },
+  { estados: ['enviada', 'casa'], campos: ['fechaEnvio', 'envio', 'paquete'] },
+  { estados: ['casa'], campos: ['fechaLlegada', 'aduanas'] },
+];
+const NOMBRE_CAMPO = { imagen: 'imagen', numero: 'número', nombre: 'nombre', serie: 'serie', genero: 'género', lanzamiento: 'lanzamiento', precioJPY: 'precio oficial', tienda: 'tienda', condicion: 'condición', compra: 'fecha de compra', estimado: 'coste estimado', pedido: 'nº de pedido', pagado: 'precio de la figura', fechaEnvio: 'fecha de envío', envio: 'envío', paquete: 'paquete', fechaLlegada: 'fecha de llegada', aduanas: 'IVA/aduana' };
+const vacioCampo = v => v == null || v === '';
+function faltanCampos(f) {
+  const out = [];
+  ETAPA_CAMPOS.forEach(g => { if (!g.estados.includes(f.estado)) return; g.campos.forEach(k => {
+    if (k === 'imagen') { if (!imgSrc(f)) out.push(k); return; }
+    if (k === 'numero') { if (!f.numero && !sinNumeroOK(f.nombre)) out.push(k); return; }
+    if (k === 'compra') { const c = f.compra || ''; if (c.length < 10) out.push(k); return; }
+    if (vacioCampo(f[k])) out.push(k);
+  }); });
+  return out;
+}
 function faltan(f) {
-  const m = [];
-  if (!imgSrc(f)) m.push('imagen');
-  if (!f.numero && !sinNumeroOK(f.nombre)) m.push('número');
-  if (!f.nombre) m.push('nombre');
-  if (!f.serie) m.push('serie');
-  if (f.estado === 'casa' || f.estado === 'enviada' || f.estado === 'reservada') {
-    const c = f.compra || '';
-    if (!c) m.push('fecha de compra');
-    else if (c.length === 4) m.push('mes y día de compra');
-    else if (c.length === 7) m.push('día de compra');
-  }
-  if (f.estado === 'casa' && !f.fechaLlegada) m.push('fecha de llegada');
-  if (f.estado === 'casa' || f.estado === 'enviada') {
-    if (!f.tienda) m.push('tienda');
-    if (f.total == null || f.total === '') m.push('coste total');
-  }
-  return m;
+  return faltanCampos(f).map(k => k === 'compra' ? ((f.compra || '').length === 4 ? 'mes y día de compra' : (f.compra || '').length === 7 ? 'día de compra' : 'fecha de compra') : NOMBRE_CAMPO[k]);
 }
 
 /* ===================== RENDER ===================== */
@@ -736,9 +778,7 @@ function figHTML(f, left) {
   const fl = faltan(f);
   const icons = (fl.length ? `<span class="bang" title="Falta: ${fl.join(', ')}">!</span>` : '') +
     (f.estado === 'quiero' ? '<span class="heart" title="Lo quiero">♥</span>' : '') +
-    (f.estado === 'casa' ? '<span class="tick" title="En casa">✓</span>' : '') +
-    (f.estado === 'reservada' ? '<span class="tick reservada" title="Reservada">€</span>' : '') +
-    (f.estado === 'enviada' ? '<span class="tick enviada" title="En camino">➜</span>' : '');
+    (ICO[f.estado] ? `<span class="tick" style="background:${ICO[f.estado][1]}" title="${ICO[f.estado][2]}">${ICO[f.estado][0]}</span>` : '');
   return `<div class="fig${sel.has(f.uid) ? ' sel' : ''}" data-uid="${f.uid}" title="${esc(title)}"${left != null ? ` style="left:${left}px"` : ''}><div class="pic">` +
     `<div class="ph">?</div>` +
     (imgSrc(f) ? `<img src="${esc(imgSrc(f))}" loading="lazy" decoding="async" draggable="false" referrerpolicy="no-referrer" onerror="this.remove()">` : '') +
@@ -837,7 +877,7 @@ const filt = { quiero: false, pend: false, casa: false, faltan: false };
 function pass(f) {
   const est = [];
   if (filt.quiero) est.push('quiero');
-  if (filt.pend) est.push('reservada', 'enviada');
+  if (filt.pend) est.push(...PEND);
   if (filt.casa) est.push('casa');
   return (!est.length || est.includes(f.estado)) && (!filt.faltan || faltan(f).length > 0);
 }
@@ -1107,7 +1147,7 @@ function drawImg() {
 const numFmt = v => v == null || v === '' ? '' : String(Math.round(v * 100) / 100).replace('.', ',');
 const numParse = s => { s = String(s || '').trim().replace(/\s/g, '').replace(',', '.'); if (!s) return null; const n = parseFloat(s); return isNaN(n) ? null : Math.round(n * 100) / 100; };
 function fillCompra(f) {
-  $('fGen').value = f.genero || ''; $('fLanz').value = f.lanzamiento || ''; const cp = (f.compra || '').split('-'); $('fCY').value = cp[0] || ''; $('fCM').value = cp[1] || ''; $('fCD').value = cp[2] ? String(+cp[2]) : '';
+  $('fGen').value = f.genero || ''; $('fLanz').value = f.lanzamiento || ''; const cp = (f.compra || '').split('-'); $('fCY').value = cp[0] || ''; $('fCM').value = cp[1] ? mesTexto(cp[1]) : ''; $('fCD').value = cp[2] ? String(+cp[2]) : '';
   $('fTienda').value = f.tienda || ''; $('fCond').value = f.condicion || '';
   $('fReed').checked = !!f.reedicion; $('fBig').checked = !!f.cajaGrande; $('fBasic').checked = !!f.basic; $('fDescat').checked = !!f.cajaDescat; $('fBonus').checked = !!f.bonus;
   $('fJPY').value = numFmt(f.precioJPY); $('fEst').value = numFmt(f.estimado);
@@ -1123,7 +1163,8 @@ function fillCompra(f) {
 }
 // fecha de compra: vale año, año+mes o fecha completa
 function leerCompra() {
-  const d = $('fCD').value.trim(), m = $('fCM').value, y = $('fCY').value.trim();
+  const d = $('fCD').value.trim(), m = parseMes($('fCM').value), y = $('fCY').value.trim();
+  if (m === null) return { val: '', err: 'El mes de compra no es válido: escribe un número del 1 al 12 o elige uno de la lista.' };
   if (!d && !m && !y) return { val: '' };
   if (d && (!m || !y)) return { val: '', err: 'Para poner el día de compra hace falta también el mes y el año.' };
   if (m && !y) return { val: '', err: 'Para poner el mes de compra hace falta también el año.' };
@@ -1134,6 +1175,22 @@ function leerCompra() {
   if (!/^\d{1,2}$/.test(d) || +d < 1 || +d > last) return { val: '', err: `Ese día no existe en ${MESES[+m - 1]} de ${y}.` };
   return { val: `${y}-${m}-${String(+d).padStart(2, '0')}` };
 }
+// mes: se puede elegir de la lista o escribir (3, 03, mar, marzo)
+const MES_CORTO = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+const MES_LARGO = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+const mesTexto = mm => `${+mm} · ${MES_LARGO[+mm - 1]}`;
+function parseMes(v) {
+  v = String(v || '').trim().toLowerCase(); if (!v) return '';
+  const n = v.match(/^(\d{1,2})/); if (n) { const x = +n[1]; return x >= 1 && x <= 12 ? String(x).padStart(2, '0') : null; }
+  const i = MES_CORTO.findIndex((c, k) => v.startsWith(c) || MES_LARGO[k].startsWith(v));
+  return i >= 0 ? String(i + 1).padStart(2, '0') : null;
+}
+$('fCMdrop').innerHTML = MES_LARGO.map((n, i) => `<button type="button" data-m="${String(i + 1).padStart(2, '0')}">${i + 1} · ${n}</button>`).join('');
+const cerrarMes = () => $('fCMdrop').classList.remove('on');
+$('fCMbtn').onclick = () => { $('fCMdrop').classList.toggle('on'); $('fCM').focus(); };
+$('fCMdrop').addEventListener('pointerdown', e => { const b = e.target.closest('[data-m]'); if (!b) return; e.preventDefault(); $('fCM').value = mesTexto(b.dataset.m); cerrarMes(); drawFalta(); });
+$('fCM').addEventListener('keydown', e => { if (e.key === 'ArrowDown') { e.preventDefault(); $('fCMdrop').classList.add('on'); } if (e.key === 'Escape' && $('fCMdrop').classList.contains('on')) { e.stopPropagation(); cerrarMes(); } });
+$('fCM').addEventListener('blur', () => { setTimeout(cerrarMes, 120); const m = parseMes($('fCM').value); if (m) $('fCM').value = mesTexto(m); drawFalta(); });
 function readCompra() {
   const pag = numParse($('fPag').value), env = numParse($('fEnv').value), adu = numParse($('fAdu').value);
   const tot = (pag != null || env != null || adu != null) ? Math.round(((pag || 0) + (env || 0) + (adu || 0)) * 100) / 100 : null;
@@ -1152,15 +1209,20 @@ function drawDesv() {
   } else $('fDesv').textContent = '';
 }
 ['fPag', 'fEnv', 'fAdu', 'fEst'].forEach(id => $(id).addEventListener('input', drawDesv));
-['fTienda', 'fPag', 'fEnv', 'fAdu', 'fCD', 'fCM', 'fCY', 'fLlegF'].forEach(id => $(id).addEventListener(id === 'fCM' || id === 'fLlegF' ? 'change' : 'input', () => drawFalta()));
+['fTienda', 'fPag', 'fEnv', 'fAdu', 'fCD', 'fCM', 'fCY', 'fLlegF'].forEach(id => $(id).addEventListener(id === 'fLlegF' ? 'change' : 'input', () => drawFalta()));
 function drawEstado() { document.querySelectorAll('#fEstado button').forEach(b => b.classList.toggle('on', b.dataset.st === draft.estado)); }
 document.querySelectorAll('#fEstado button').forEach(b => b.onclick = () => { draft.estado = b.dataset.st; drawEstado(); drawFalta(); });
+const CAMPO_INPUT = { numero: 'fNum', nombre: 'fName', serie: 'fSerie', genero: 'fGen', lanzamiento: 'fLanz', precioJPY: 'fJPY', tienda: 'fTienda', condicion: 'fCond', compra: 'fCD', estimado: 'fEst', pedido: 'fPedido', pagado: 'fPag', fechaEnvio: 'fEnvF', envio: 'fEnv', paquete: 'fPaq', fechaLlegada: 'fLlegF', aduanas: 'fAdu' };
 function drawFalta() {
   const c = readCompra();
-  const fl = faltan({ img: draft.img, imgUser: draft.imgUser, numero: $('fNum').value.trim(), nombre: $('fName').value.trim(), serie: $('fSerie').value.trim(), estado: draft.estado, tienda: c.tienda, total: c.total, compra: c.compra, fechaLlegada: c.fechaLlegada });
+  const pseudo = { ...c, img: draft.img, imgUser: draft.imgUser, numero: $('fNum').value.trim(), nombre: $('fName').value.trim(), serie: $('fSerie').value.trim(), estado: draft.estado, pedido: $('fPedido').value.trim(), paquete: $('fPaq').value };
+  const keys = faltanCampos(pseudo), fl = faltan(pseudo);
+  for (const k in CAMPO_INPUT) { const el = $(CAMPO_INPUT[k]); const f = el && el.closest('.f'); if (f) f.classList.toggle('miss', keys.includes(k)); }
+  $('imgBox').classList.toggle('miss', keys.includes('imagen'));
   $('fFalta').textContent = fl.length ? '! Falta: ' + fl.join(', ') : '';
 }
-['fNum', 'fName', 'fSerie'].forEach(id => $(id).addEventListener('input', drawFalta));
+['fNum', 'fName', 'fSerie', 'fJPY', 'fEst', 'fPedido'].forEach(id => $(id).addEventListener('input', drawFalta));
+['fGen', 'fLanz', 'fCond', 'fPaq', 'fEnvF'].forEach(id => $(id).addEventListener('change', drawFalta));
 function drawChips() { $('chips').innerHTML = parseTags($('fTags').value).map(t => `<span class="chip">#${esc(t)}</span>`).join(''); }
 function drawGs() { $('fGs').textContent = draft.gsId ? `Enlazada a GoodSmile · producto ${draft.gsId}` : ''; }
 $('fTags').addEventListener('input', drawChips);
@@ -1186,7 +1248,7 @@ $('catRes').addEventListener('click', e => {
   const row = CATALOGO.find(r => String(r[0]) === it.dataset.id); if (!row) return;
   const [id, num, name, file, serie] = row;
   draft.gsId = String(id); draft.img = gsImg(id, file);
-  $('fNum').value = num; $('fName').value = name; $('fSerie').value = serie || '';
+  $('fNum').value = num; $('fName').value = name.replace(/^Nendoroid\s+/i, ''); $('fSerie').value = serie || '';
   $('catRes').classList.remove('on'); $('catQ').value = '';
   drawImg(); drawGs(); $('fSerie').focus();
 });
@@ -1277,7 +1339,7 @@ function cmpFig(a, b) {
 const pad4 = n => String(n).padStart(4, '0');
 function stIcon(f) {
   return (faltan(f).length ? `<span class="st bang" title="Falta: ${faltan(f).join(', ')}">!</span>` : '') +
-    ({ casa: '<span class="st casa" title="En casa">✓</span>', reservada: '<span class="st reservada" title="Reservada">€</span>', enviada: '<span class="st enviada" title="En camino">➜</span>', quiero: '<span class="st quiero" title="Lo quiero">♥</span>' }[f.estado] || '');
+    (f.estado === 'quiero' ? '<span class="st quiero" title="Lo quiero">♥</span>' : ICO[f.estado] ? `<span class="st" style="background:${ICO[f.estado][1]}" title="${ICO[f.estado][2]}">${ICO[f.estado][0]}</span>` : '');
 }
 function renderListas() {
   const tokens = qTokens();
@@ -1297,7 +1359,7 @@ function renderListas() {
     const cnt = e => c.items.filter(f => f.estado === e).length;
     const vis = c.items.filter(f => pass(f) && matches(f, tokens));
     shown += vis.length; total += c.items.length;
-    return `<div class="lcol"><div class="lcol-h"><div class="t">${c.t}</div><div class="s"><span>✓ ${cnt('casa')}</span><span>⏳ ${cnt('reservada') + cnt('enviada')}</span><span>♥ ${cnt('quiero')}</span><span style="margin-left:auto">${c.items.length} en total</span></div></div>` +
+    return `<div class="lcol"><div class="lcol-h"><div class="t">${c.t}</div><div class="s"><span>✓ ${cnt('casa')}</span><span>⏳ ${PEND.reduce((s, e) => s + cnt(e), 0)}</span><span>♥ ${cnt('quiero')}</span><span style="margin-left:auto">${c.items.length} en total</span></div></div>` +
       `<div class="lcol-b">${vis.length ? vis.map(f => {
         const src = imgSrc(f);
         return `<div class="lrow ${f.estado}" data-uid="${f.uid}">${src ? `<img src="${esc(src)}" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.outerHTML='<div class=lph>?</div>'">` : '<div class="lph">?</div>'}` +
@@ -1387,7 +1449,7 @@ $('popBg').addEventListener('pointerdown', e => { if (e.target === $('popBg')) c
 
 /* ===================== ESTADÍSTICAS ===================== */
 let dScope = 'todo';
-const SCOPES = { todo: ['Todo', ['casa', 'enviada', 'reservada']], casa: ['✓ En casa', ['casa']], enviada: ['➜ En camino', ['enviada']], reservada: ['€ Reservadas', ['reservada']] };
+const SCOPES = { todo: ['Todo', COMPRADO], casa: ['✓ En casa', ['casa']], enviada: ['➜ En camino', ['enviada']], warehouse: ['W Warehouse', ['warehouse']], pagado: ['€ Pagadas', ['pagado']], reservada: ['R Reservadas', ['reservada']] };
 const S3 = [{ n: 'Figura', c: C1 }, { n: 'Envío', c: C2 }, { n: 'IVA/aduana', c: C3 }];
 const desglose = (titulo, a) => `<b>${titulo}</b> · ${a.length} figuras<div class="r"><span><i style="background:${C1}"></i>Figura</span>${eur0(sumK(a, 'pagado'))}</div><div class="r"><span><i style="background:${C2}"></i>Envío</span>${eur0(sumK(a, 'envio'))}</div><div class="r"><span><i style="background:${C3}"></i>IVA/aduana</span>${eur0(sumK(a, 'aduanas'))}</div><div class="r"><b>Total</b><b>${eur0(sumK(a, 'total'))}</b></div>`;
 function scopeSet() { const est = SCOPES[dScope][1]; return Object.values(S.figs).filter(f => est.includes(f.estado)); }
@@ -1435,6 +1497,8 @@ function renderDatos() {
       ${kpi('IVA y aduanas', eur0(gAdu), pct(gAdu))}
       ${kpi('Frente al estimado', (desv > 0 ? '+' : '') + eur0(desv), desv < 0 ? 'has pagado menos de lo calculado' : 'has pagado más de lo calculado')}
       ${kpi('Con fecha de llegada', `${conFecha.length}`, `de ${conCoste.length} con coste`)}
+      ${(() => { const all = Object.values(S.figs), w = all.filter(f => f.estado === 'warehouse'), pg = all.filter(f => f.estado === 'pagado'), r = all.filter(f => f.estado === 'reservada'), en = all.filter(f => f.estado === 'enviada');
+        return kpi('Pendiente de recibir', String(w.length + pg.length + r.length + en.length), `W ${w.length} · € ${pg.length} · R ${r.length} · ➜ ${en.length} · ${eur0(sumK([...w, ...pg, ...en], 'total'))} ya pagados`); })()}
     </div>
     ${sinFechaMsg}
     <div class="grid2">
@@ -1552,12 +1616,20 @@ const fmtCompra = c => !c ? '' : c.length === 4 ? `${c} (sin mes)` : c.length ==
 let pedYear = String(new Date().getFullYear());
 
 // la aduana de un paquete con «repartir» manda sobre la de cada ficha, también si se edita después
+// reparte un importe en partes iguales; los céntimos que sobran van a la primera figura
+function partes(total, n) { const c = Math.round(total * 100), base = Math.floor(c / n), resto = c - base * n; return Array.from({ length: n }, (_, i) => (base + (i < resto ? 1 : 0)) / 100); }
+// el envío y la aduana de un paquete con «repartir» mandan sobre los de cada ficha, también si se editan después
 function aplicarRepartos() {
   Object.values(S.paquetes || {}).forEach(p => {
-    if (!p.repartir || p.aduana == null) return;
+    const env = p.repartirEnvio && p.envio != null, adu = p.repartir && p.aduana != null;
+    if (!env && !adu) return;
     const fs = figsDe(p.id); if (!fs.length) return;
-    const parte = Math.round(p.aduana / fs.length * 100) / 100;
-    fs.forEach(f => { f.aduanas = parte; f.total = Math.round(((+f.pagado || 0) + (+f.envio || 0) + parte) * 100) / 100; });
+    const pe = env ? partes(+p.envio, fs.length) : null, pa = adu ? partes(+p.aduana, fs.length) : null;
+    fs.forEach((f, i) => {
+      if (env) f.envio = pe[i];
+      if (adu) f.aduanas = pa[i];
+      f.total = Math.round(((+f.pagado || 0) + (+f.envio || 0) + (+f.aduanas || 0)) * 100) / 100;
+    });
   });
 }
 // cambia el mes de una fecha conservando el día (ajustado a la longitud del mes)
@@ -1601,7 +1673,7 @@ function renderPedidos() {
       <div class="pkh"><span class="pkst" style="background:${col}" title="${nm}">${ic}</span><span class="pktr">${esc(p.tracking || 'Sin tracking')}</span></div>
       <small>${esc(p.transportista || '')}${p.fechaEnvio ? (p.transportista ? ' · ' : '') + 'enviado ' + fmtFecha(p.fechaEnvio) : ''}</small>
       <div class="pkth">${fs.slice(0, 10).map(f => imgSrc(f) ? `<img src="${esc(imgSrc(f))}" referrerpolicy="no-referrer" draggable="false">` : '<span class="lph">?</span>').join('')}</div>
-      <div class="pkn"><div class="r"><span>Figuras (${fs.length})</span><b>${eur(fs.reduce((s, f) => s + (+f.pagado || 0), 0))}</b></div><div class="r"><span>Envío</span><b>${eur(envio)}</b></div><div class="r"><span>Aduana${p.repartir ? ' · repartida' : ''}</span><b>${eur(adu)}</b></div></div>
+      <div class="pkn"><div class="r"><span>Figuras (${fs.length})</span><b>${eur(fs.reduce((s, f) => s + (+f.pagado || 0), 0))}</b></div><div class="r"><span>Envío${p.repartirEnvio ? ' · repartido' : ''}</span><b>${eur(envio)}</b></div><div class="r"><span>Aduana${p.repartir ? ' · repartida' : ''}</span><b>${eur(adu)}</b></div></div>
       <button class="llegbtn" data-lleg="${p.id}">${p.estado === 'entregado' ? (p.fechaLlegada ? `✓ Llegó el ${fmtFecha(p.fechaLlegada)}` : '✓ ¡Paquete recibido!') : 'Marcar que ha llegado'}</button></div>`;
   };
   const cols = MESES.map((n, i) => {
@@ -1618,7 +1690,7 @@ function renderPedidos() {
       <div class="ypaqs">${vp.map(pcard).join('')}</div>
       <div class="ytot"><b>Coste total mensual</b><div class="r"><span>Solo nendos</span>${eur(nend)}</div><div class="r"><span>Solo paquetes</span>${eur(env)}</div><div class="r"><span>Solo aduanas</span>${eur(adu)}</div><div class="r tot"><span>Total</span><b>${eur(nend + env + adu)}</b></div></div></div>`;
   }).join('');
-  const sinFecha = all.filter(f => (f.estado === 'reservada' || f.estado === 'enviada') && !f.compra).filter(okF).sort(cmpFig);
+  const sinFecha = all.filter(f => PEND.includes(f.estado) && !f.compra).filter(okF).sort(cmpFig);
   const soloAnyoF = all.filter(f => f.compra === pedYear).filter(okF).sort(cmpFig);
   const soloAnyoP = paqs.filter(p => p.mes === pedYear).filter(okP);
   const yTot = all.filter(f => (f.compra || '').startsWith(pedYear)).reduce((s, f) => s + (+f.total || 0), 0);
@@ -1626,7 +1698,7 @@ function renderPedidos() {
       <div class="ytabs">${ylist.map(y => `<button class="ytab${y === pedYear ? ' on' : ''}${y > cur ? ' fut' : ''}" data-year="${y}">${y}</button>`).join('')}</div>
       <span class="note">${pedYear}: ${all.filter(f => (f.compra || '').startsWith(pedYear)).length} figuras · ${paqs.filter(p => (p.mes || '').startsWith(pedYear)).length} paquetes · ${eur(yTot)}</span>
       <span class="spacer"></span><button class="btn primary big" id="btnPaq">+ Nuevo paquete</button></div>
-    ${sinFecha.length ? `<div class="sinf"><div class="sinfh"><b>Reservadas y en camino sin fecha de compra</b> <span>${sinFecha.length} · arrástralas al mes en que las pediste</span></div><div class="sinfl">${sinFecha.map(fcard).join('')}</div></div>` : ''}
+    ${sinFecha.length ? `<div class="sinf"><div class="sinfh"><b>Pendientes de recibir sin fecha de compra</b> <span>${sinFecha.length} · arrástralas al mes en que las pediste</span></div><div class="sinfl">${sinFecha.map(fcard).join('')}</div></div>` : ''}
     <div class="ymes sinmes" data-mes="${pedYear}"><div class="sinfh"><b>${pedYear} · sin mes concreto</b> <span>${soloAnyoF.length + soloAnyoP.length ? 'arrástralas a su mes cuando lo sepas' : 'suelta aquí lo que solo sabes que es de este año'}</span></div><div class="sinfl">${soloAnyoF.map(fcard).join('')}${soloAnyoP.map(pcard).join('')}</div></div>
     <div class="ygrid">${cols}</div>`;
   $('btnPaq').onclick = () => openPaq(null);
@@ -1638,7 +1710,7 @@ $('pPedidos').addEventListener('click', e => {
   const y = e.target.closest('.ytab'); if (y) { pedYear = y.dataset.year; renderPedidos(); return; }
   const l = e.target.closest('[data-lleg]'); if (l) { const p = S.paquetes[l.dataset.lleg]; snap();
     if (p.estado === 'entregado') { p.estado = 'enviado'; toast('Desmarcado'); }
-    else { p.estado = 'entregado'; const fs = figsDe(p.id); fs.forEach(f => { if (f.estado === 'enviada' || f.estado === 'reservada') f.estado = 'casa'; }); toast(`Paquete marcado como llegado${fs.length ? ` · ${fs.length} figuras ✓ En casa` : ''}`); }
+    else { p.estado = 'entregado'; const fs = figsDe(p.id); fs.forEach(f => { if (PEND.includes(f.estado)) f.estado = 'casa'; }); toast(`Paquete marcado como llegado${fs.length ? ` · ${fs.length} figuras ✓ En casa` : ''}`); }
     save(); renderPedidos(); return; }
   const o = e.target.closest('[data-open]'); if (o) { openModal(o.dataset.open); return; }
   const p = e.target.closest('.pkc'); if (p && !e.target.closest('input,select,button')) { tipHide(); openPaq(p.dataset.id); }
@@ -1712,7 +1784,7 @@ function sincFechasFig(f, antes) {
 }
 function openPaq(id) {
   const p = id ? S.paquetes[id] : { id: 'p' + Date.now().toString(36), tracking: '', transportista: '', mes: pedYear === hoyMes().slice(0, 4) ? hoyMes() : pedYear + '-01', fechaEnvio: '', estado: 'preparando', envio: null, aduana: null, repartir: false, fechaLlegada: '', notas: '' };
-  const cands = Object.values(S.figs).filter(f => f.paquete === p.id || ((f.estado === 'reservada' || f.estado === 'enviada') && !f.paquete)).sort(cmpFig);
+  const cands = Object.values(S.figs).filter(f => f.paquete === p.id || (PEND.includes(f.estado) && !f.paquete)).sort(cmpFig);
   openPop(`<div class="pophead"><h2>${id ? 'Paquete' : 'Nuevo paquete'}</h2><span class="spacer"></span></div>
     <div class="row3" style="grid-template-columns:1.4fr 1fr 1fr 1fr">
       <div class="f"><label>Nº de seguimiento</label><input id="qTr" value="${esc(p.tracking)}" placeholder="CN1239…"></div>
@@ -1727,10 +1799,12 @@ function openPaq(id) {
     <div class="row3" style="grid-template-columns:1fr 1fr 2fr;margin-top:10px;align-items:end">
       <div class="f"><label>Envío del paquete (€)</label><input id="qEn" value="${numFmt(p.envio)}" inputmode="decimal" placeholder="suma de sus figuras"></div>
       <div class="f"><label>Aduana / IVA (€)</label><input id="qAd" value="${numFmt(p.aduana)}" inputmode="decimal"></div>
-      <label class="chk"><input type="checkbox" id="qRep"${p.repartir ? ' checked' : ''}> Repartir la aduana entre sus figuras <small>(sustituye la que tengan en su ficha y se recalcula si la cambias)</small></label>
+      <div class="chks"><label class="chk"><input type="checkbox" id="qRepEnv"${p.repartirEnvio ? ' checked' : ''}> Repartir el envío entre sus figuras</label>
+      <label class="chk"><input type="checkbox" id="qRep"${p.repartir ? ' checked' : ''}> Repartir la aduana entre sus figuras</label>
+      <small>Sustituye lo que tengan en su ficha y se recalcula si cambias el importe o las figuras.</small></div>
     </div>
     <div class="f" style="margin-top:10px"><label>Notas</label><input id="qNo" value="${esc(p.notas || '')}"></div>
-    <div class="fsec" style="margin:16px 0 6px">Figuras del paquete (aparecen las reservadas y en camino sin paquete)</div>
+    <div class="fsec" style="margin:16px 0 6px">Figuras del paquete (aparecen las reservadas, pagadas, en warehouse y en camino sin paquete)</div>
     <div class="qfigs">${cands.map(f => `<label class="qf"><input type="checkbox" value="${f.uid}"${f.paquete === p.id ? ' checked' : ''}>${imgSrc(f) ? `<img src="${esc(imgSrc(f))}" referrerpolicy="no-referrer">` : '<span class="lph">?</span>'}<span><b>${esc(f.numero || '')}</b> ${esc(f.nombre)}<br><small>${esc(f.tienda || '')}${f.pedido ? ' · pedido ' + esc(f.pedido) : ''}</small></span>${stIcon(f)}</label>`).join('') || vacio('No hay figuras reservadas o en camino sin paquete.')}</div>
     <div class="modal-foot">
       ${id ? '<button class="btn danger" id="qDel">Eliminar paquete</button>' : ''}
@@ -1740,14 +1814,14 @@ function openPaq(id) {
   $('qSave').onclick = () => {
     snap();
     Object.assign(p, { tracking: $('qTr').value.trim(), transportista: $('qTp').value.trim(), fechaEnvio: $('qFp').value, mes: $('qMes').value || p.mes, estado: est, fechaLlegada: $('qLl').value,
-      envio: numParse($('qEn').value), aduana: numParse($('qAd').value), repartir: $('qRep').checked, notas: $('qNo').value.trim() });
+      envio: numParse($('qEn').value), aduana: numParse($('qAd').value), repartir: $('qRep').checked, repartirEnvio: $('qRepEnv').checked, notas: $('qNo').value.trim() });
     S.paquetes[p.id] = p;
     const marcadas = [...document.querySelectorAll('.qfigs input')].filter(i => i.checked).map(i => i.value);
     Object.values(S.figs).forEach(f => { if (f.paquete === p.id && !marcadas.includes(f.uid)) f.paquete = ''; });
     let cambiadas = 0;
     marcadas.forEach(u => { const f = S.figs[u]; f.paquete = p.id;
-      if ((est === 'enviado' || est === 'aduana') && f.estado === 'reservada') { f.estado = 'enviada'; cambiadas++; }
-      if (est === 'entregado' && (f.estado === 'reservada' || f.estado === 'enviada')) { f.estado = 'casa'; cambiadas++; } });
+      if ((est === 'enviado' || est === 'aduana') && ['reservada', 'pagado', 'warehouse'].includes(f.estado)) { f.estado = 'enviada'; cambiadas++; }
+      if (est === 'entregado' && PEND.includes(f.estado)) { f.estado = 'casa'; cambiadas++; } });
     propagarPaq(p);
     save(); closePop(); render();
     if (cambiadas) toast(`${cambiadas} figuras cambian de estado`);
