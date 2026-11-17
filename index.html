@@ -414,6 +414,7 @@ body.pdrag,body.pdrag *{cursor:grabbing!important;user-select:none}
 .gopts small{font-weight:400;opacity:.85}
 
 
+.mwho{font-size:11px;color:var(--muted);padding:8px 12px 4px;border-top:1px solid var(--line);margin-top:4px}
 </style>
 </head>
 <body>
@@ -453,6 +454,7 @@ body.pdrag,body.pdrag *{cursor:grabbing!important;user-select:none}
     <button class="btn icon" id="btnMenu">⋯</button>
     <div class="menu-pop" id="menuPop">
       <button id="mImport">Importar copia (.json)…</button>
+      <div class="mwho" id="mWho"></div>
       <button id="mLogout">Cerrar sesión</button>
     </div>
   </div>
@@ -1751,7 +1753,7 @@ $('fCopy').onclick = async () => {
 const SUPA_URL = 'https://sxpbsekgijvanylhqyaf.supabase.co';
 const SUPA_KEY = 'sb_publishable_f8802PsMYs0GnHGzPxYRUA__hoXXtwN';
 const T_FIG = 'nendome_figuras', T_EST = 'nendome_estado', CLAVES = ['shelves', 'place', 'paquetes'];
-let sb = null, user = null, listo = false;
+let sb = null, user = null, listo = false, owner = null, ownerEmail = '';
 let synced = { figs: {}, est: {} }, syncing = false, otraVez = false, reintentoT = 0;
 
 function setSync(st) {
@@ -1773,18 +1775,18 @@ async function flush(todo) {
     for (const k of CLAVES) { const s = JSON.stringify(S[k]); if (todo || synced.est[k] !== s) upE.push([k, s]); }
     const lotes = trozos(up, 100); let hechos = 0;
     for (const lote of lotes) {
-      const { error } = await sb.from(T_FIG).upsert(lote.map(([u, s]) => ({ user_id: user.id, uid: u, data: JSON.parse(s), updated_at: new Date().toISOString() })), { onConflict: 'user_id,uid' });
+      const { error } = await sb.from(T_FIG).upsert(lote.map(([u, s]) => ({ user_id: owner, uid: u, data: JSON.parse(s), updated_at: new Date().toISOString() })), { onConflict: 'user_id,uid' });
       if (error) throw error;
       lote.forEach(([u, s]) => synced.figs[u] = s);
       hechos += lote.length; if (lotes.length > 2) gateMsg(`Subiendo tus figuras… ${hechos} de ${up.length}`, true);
     }
     for (const lote of trozos(del, 200)) {
-      const { error } = await sb.from(T_FIG).delete().eq('user_id', user.id).in('uid', lote);
+      const { error } = await sb.from(T_FIG).delete().eq('user_id', owner).in('uid', lote);
       if (error) throw error;
       lote.forEach(u => delete synced.figs[u]);
     }
     if (upE.length) {
-      const { error } = await sb.from(T_EST).upsert(upE.map(([k, s]) => ({ user_id: user.id, clave: k, data: JSON.parse(s), updated_at: new Date().toISOString() })), { onConflict: 'user_id,clave' });
+      const { error } = await sb.from(T_EST).upsert(upE.map(([k, s]) => ({ user_id: owner, clave: k, data: JSON.parse(s), updated_at: new Date().toISOString() })), { onConflict: 'user_id,clave' });
       if (error) throw error;
       upE.forEach(([k, s]) => synced.est[k] = s);
     }
@@ -1803,12 +1805,12 @@ window.addEventListener('beforeunload', e => { if (listo && pendiente()) { flush
 async function cloudLoad() {
   const figs = {}; let desde = 0;
   for (;;) {
-    const { data, error } = await sb.from(T_FIG).select('uid,data').order('uid').range(desde, desde + 999);
+    const { data, error } = await sb.from(T_FIG).select('uid,data').eq('user_id', owner).order('uid').range(desde, desde + 999);
     if (error) throw error;
     data.forEach(r => figs[r.uid] = r.data);
     if (data.length < 1000) break; desde += 1000;
   }
-  const { data: est, error } = await sb.from(T_EST).select('clave,data');
+  const { data: est, error } = await sb.from(T_EST).select('clave,data').eq('user_id', owner);
   if (error) throw error;
   const st = { v: 4, figs, shelves: null, place: {}, paquetes: {} };
   est.forEach(r => { if (CLAVES.includes(r.clave)) st[r.clave] = r.data; });
@@ -1850,8 +1852,17 @@ async function boot() {
   user = data.session.user; entrar();
 }
 
+// si alguien te ha compartido su colección, trabajas sobre la suya
+async function buscarDueno() {
+  owner = user.id;
+  try {
+    const { data, error } = await sb.from('nendome_miembros').select('owner_id').eq('member_id', user.id).limit(1);
+    if (!error && data && data.length) owner = data[0].owner_id;
+  } catch (e) {}
+}
 async function entrar() {
   gateMsg('Cargando tu colección…');
+  await buscarDueno();
   let st;
   try { st = await cloudLoad(); }
   catch (e) {
@@ -1862,6 +1873,8 @@ async function entrar() {
   const vacio = !Object.keys(st.figs).length;
   S = sanitize(st); hist = []; $('btnUndo').disabled = true;
   marcarSincronizado(); listo = true; setSync('ok');
+  $('mWho').textContent = owner === user.id ? `Sesión: ${user.email}` : `Sesión: ${user.email} · colección compartida`;
+  if (vacio && owner !== user.id) { cerrarGate(); return arrancarUI(); }
   if (vacio) return pantallaVacia();
   arrancarUI();
 }
