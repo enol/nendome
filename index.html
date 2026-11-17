@@ -26,7 +26,7 @@ header{position:fixed;top:0;left:0;right:0;height:58px;display:flex;align-items:
 .tab{padding:6px 13px;border-radius:999px;font-size:14px;color:var(--muted);border:0;background:transparent;cursor:pointer}
 .tab.on{background:var(--ink);color:#fff}
 .tab[disabled]{cursor:default;opacity:.55}
-.search{flex:1 1 380px;max-width:460px;min-width:360px;display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:7px 14px}
+.search{flex:1 1 320px;max-width:460px;min-width:290px;display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:7px 14px}
 .search svg{flex:none;opacity:.5}
 .search input{border:0;outline:0;flex:1;font:inherit;font-size:14px;background:transparent;color:var(--ink);min-width:60px}
 .search .x{border:0;background:none;color:var(--muted);cursor:pointer;font-size:16px;padding:0 2px;display:none}
@@ -420,6 +420,26 @@ body.pdrag,body.pdrag *{cursor:grabbing!important;user-select:none}
 .sync i{width:8px;height:8px;border-radius:50%;background:currentColor;flex:none}
 .sync i.vivo{box-shadow:0 0 0 3px rgba(47,143,79,.2)}
 @media (max-width:1560px){.sync span{display:none}}
+
+.catpop{width:400px;right:0;padding:14px 16px}
+.cath b{display:block;font-size:15px}
+.cath small{color:var(--muted);font-size:11px}
+.catpasos{margin:10px 0 8px;padding-left:20px;font-size:13px;line-height:1.45}
+.catpasos li{margin-bottom:9px}
+.catpasos small{display:block;color:var(--muted);font-size:11px}
+.catpasos .btn{padding:4px 12px;font-size:12px}
+.bmk{display:inline-block;margin:5px 0 2px;background:#e2725b;color:#fff;text-decoration:none;font-weight:700;border-radius:999px;padding:6px 14px;cursor:grab;font-size:13px}
+.catnota{display:block;color:var(--muted);font-size:11px;border-top:1px solid var(--line);padding-top:8px}
+.cattxt{width:100%;height:110px;border:1px solid var(--line);border-radius:10px;padding:10px;font:12px ui-monospace,Consolas,monospace;background:#fff;outline:0;resize:vertical}
+.cattxt:focus{border-color:var(--accent)}
+.catsum{margin:12px 0 6px;font-size:14px}
+.catlist{max-height:40vh;overflow:auto;border:1px solid var(--line);border-radius:10px;background:#fff;padding:4px}
+.catlist small{color:var(--muted)}
+
+.catpop button.btn{display:inline-block;width:auto;padding:5px 14px;border:1px solid var(--line);background:#fff;border-radius:999px;text-align:center;font-size:12px;color:var(--ink)}
+.catpop button.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700;margin-top:4px}
+.catpasos li small{margin-top:2px}
+@media (max-width:1500px){header{gap:7px;padding:0 12px}.logo{font-size:24px}.tab{padding:6px 10px}}
 </style>
 </head>
 <body>
@@ -448,6 +468,10 @@ body.pdrag,body.pdrag *{cursor:grabbing!important;user-select:none}
   <span class="sync" id="sync" title="Estado de la sincronización con Supabase"></span>
   <button class="btn icon" id="btnUndo" title="Deshacer (Ctrl+Z)">↶</button>
   <button class="btn icon" id="btnFit" title="Ver todas las estanterías">⤢ Encajar</button>
+  <div class="menu">
+    <button class="btn icon" id="btnCat" title="Añadir al buscador las figuras nuevas de GoodSmile">↻ Catálogo</button>
+    <div class="menu-pop catpop" id="catPop"></div>
+  </div>
   <div class="menu">
     <button class="btn icon" id="btnExp" title="Descargar una copia de tus datos">⬇ Exportar</button>
     <div class="menu-pop" id="expPop">
@@ -2026,6 +2050,7 @@ async function buscarDueno() {
 async function entrar() {
   gateMsg('Cargando tu colección…');
   await buscarDueno();
+  await cargarCatalogo();
   let st;
   try { st = await cloudLoad(); }
   catch (e) {
@@ -2085,7 +2110,7 @@ window.addEventListener('focus', async () => {
 });
 
 /* ===================== EXPORTAR ===================== */
-$('btnExp').onclick = () => { $('expPop').classList.toggle('on'); $('menuPop').classList.remove('on'); };
+$('btnExp').onclick = () => { $('expPop').classList.toggle('on'); $('menuPop').classList.remove('on'); $('catPop').classList.remove('on'); };
 document.addEventListener('pointerdown', e => { if (!e.target.closest('.menu')) $('expPop').classList.remove('on'); });
 const hoyTxt = () => hoyISO();
 function descargar(blob, nombre) { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = nombre; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000); }
@@ -2124,6 +2149,84 @@ $('eXlsx').onclick = () => {
   XLSX.writeFile(wb, `nendome-${hoyTxt()}.xlsx`);
   toast('Excel descargado');
 };
+
+/* ===================== ACTUALIZAR CATÁLOGO DE GOODSMILE ===================== */
+const MARCADOR = "(async () => {\n  if (!/goodsmile\\.com$/.test(location.hostname)) { alert('Abre goodsmile.com y pulsa aqu\u00ed otra vez.'); return; }\n  if (document.getElementById('nendomeBox')) return;\n  const box = document.createElement('div');\n  box.id = 'nendomeBox';\n  box.style.cssText = 'position:fixed;z-index:2147483647;top:20px;right:20px;width:380px;background:#fffaf4;color:#3b3330;border:2px solid #e2725b;border-radius:16px;padding:16px 18px;font:14px/1.45 system-ui,sans-serif;box-shadow:0 20px 50px rgba(0,0,0,.25)';\n  document.body.appendChild(box);\n  const pinta = h => { box.innerHTML = '<div style=\"font-weight:800;color:#e2725b;font-size:18px;margin-bottom:6px\">Nendome \u00b7 novedades</div>' + h; };\n  const m = location.hash.match(/nendome-max=(\\d+)/);\n  const maxId = m ? +m[1] : 0;\n  const FILTRO = { search_keyword: '', search_over18: false, search_category: [6, 15, 63, 59, 32, 93, 57, 51, 61, 41, 21, 36, 35], search_maker: [], search_title: [], search_status: '0', release_date_from: '', release_date_to: '', search_bonus: false, search_exclusive: false, search_sale: false, search_sales_origin: false, tag: [] };\n  const espera = ms => new Promise(r => setTimeout(r, ms));\n  const nuevos = [];\n  try {\n    let sinNovedades = 0, pagina = 0;\n    const tope = maxId ? 25 : 5;\n    while (pagina < tope && sinNovedades < 2) {\n      pinta('Buscando figuras nuevas\u2026 p\u00e1gina ' + (pagina + 1) + '<br><small>Encontradas: ' + nuevos.length + '</small>');\n      const url = '/en/search/list?filter=' + encodeURIComponent(JSON.stringify(FILTRO)) + '&orderBy=1&limit=60&offset=' + (pagina * 60) + '&couponId=null&searchIndex=-1';\n      const html = await (await fetch(url)).text();\n      const doc = new DOMParser().parseFromString(html, 'text/html');\n      const items = doc.querySelectorAll('.p-product-list__item');\n      if (!items.length) break;\n      let aqui = 0;\n      items.forEach(it => {\n        const a = it.querySelector('a');\n        const id = +(((a ? a.getAttribute('href') : '') || '').match(/\\/product\\/(\\d+)/) || [])[1];\n        if (!id || (maxId && id <= maxId)) return;\n        const nombre = ((it.querySelector('h2') || {}).textContent || '').trim();\n        const fc = it.querySelector('figcaption');\n        const numero = fc ? fc.textContent.trim() : '';\n        if (/^Nendoroid Doll/i.test(nombre) || /^\\(Box\\)/i.test(nombre)) return;\n        if (!numero && !/^Nendoroid (More|Surprise)/i.test(nombre)) return;\n        const im = it.querySelector('.b-product-item__image img');\n        const src = im ? im.getAttribute('src') : '';\n        const img = (src.split('/gsc-webrevo-sdk-storage-prd/product/image/')[1]) || '';\n        if (!nuevos.some(n => n[0] === id)) { nuevos.push([id, numero, nombre, img, '']); aqui++; }\n      });\n      sinNovedades = aqui ? 0 : sinNovedades + 1;\n      pagina++;\n      await espera(400);\n    }\n    const re = />\\s*Series\\s*<\\/h3>[\\s\\S]*?c-text-body\">([\\s\\S]*?)<\\/p>/i;\n    for (let i = 0; i < nuevos.length; i++) {\n      pinta('Leyendo la serie de cada figura\u2026 ' + (i + 1) + ' de ' + nuevos.length);\n      try {\n        const h = await (await fetch('/en/product/' + nuevos[i][0])).text();\n        const s = h.match(re);\n        if (s) { const t = document.createElement('textarea'); t.innerHTML = s[1]; nuevos[i][4] = t.value.replace(/\\s+/g, ' ').trim(); }\n      } catch (e) {}\n      await espera(150);\n    }\n    const datos = JSON.stringify({ nendome: 'catalogo', v: 1, fecha: new Date().toISOString(), items: nuevos });\n    if (!nuevos.length) { pinta('No hay figuras nuevas desde tu \u00faltima actualizaci\u00f3n. \ud83c\udf89<br><br><button id=\"nendomeX\" style=\"border:0;background:#3b3330;color:#fff;border-radius:999px;padding:8px 16px;cursor:pointer\">Cerrar</button>'); document.getElementById('nendomeX').onclick = () => box.remove(); return; }\n    pinta('<b>' + nuevos.length + ' figuras nuevas.</b><br>1. Pulsa <b>Copiar</b>.<br>2. Vuelve a Nendome \u2192 <b>\u21bb Cat\u00e1logo</b> \u2192 <b>Pegar novedades</b>.<br><br>'\n      + '<button id=\"nendomeC\" style=\"border:0;background:#e2725b;color:#fff;font-weight:700;border-radius:999px;padding:9px 18px;cursor:pointer\">Copiar</button> '\n      + '<button id=\"nendomeX\" style=\"border:1px solid #e7dccd;background:#fff;border-radius:999px;padding:8px 14px;cursor:pointer\">Cerrar</button>'\n      + '<textarea id=\"nendomeT\" readonly style=\"width:100%;height:70px;margin-top:10px;font:11px monospace;border:1px solid #e7dccd;border-radius:8px\"></textarea><div id=\"nendomeOk\" style=\"color:#2f8f4f;font-weight:700;margin-top:4px\"></div>');\n    const ta = document.getElementById('nendomeT'); ta.value = datos;\n    document.getElementById('nendomeX').onclick = () => box.remove();\n    document.getElementById('nendomeC').onclick = async () => {\n      let ok = false;\n      try { await navigator.clipboard.writeText(datos); ok = true; } catch (e) { ta.select(); try { ok = document.execCommand('copy'); } catch (_) {} }\n      document.getElementById('nendomeOk').textContent = ok ? '\u2713 Copiado. Ya puedes volver a Nendome.' : 'Selecciona el texto de arriba y c\u00f3pialo con Ctrl+C.';\n    };\n  } catch (e) {\n    pinta('Algo ha fallado: ' + e + '<br><small>Recarga goodsmile.com y vuelve a intentarlo.</small>');\n  }\n})();";
+const T_CAT = 'nendome_catalogo';
+let catUltima = null, catExtra = 0;
+const maxIdCatalogo = () => CATALOGO.reduce((m, r) => Math.max(m, +r[0] || 0), 0);
+function anadirAlCatalogo(rows) {          // rows: [id, numero, nombre, img, serie]
+  let nuevos = 0;
+  rows.forEach(r => {
+    const id = String(r[0]); const ex = CAT_BY_ID[id];
+    if (ex) { if (r[3] && !ex[3]) ex[3] = r[3]; if (r[4] && !ex[4]) ex[4] = r[4]; return; }
+    const fila = [+r[0], r[1] || '', r[2] || '', r[3] || '', r[4] || ''];
+    CATALOGO.push(fila); CAT_BY_ID[id] = fila; nuevos++;
+  });
+  return nuevos;
+}
+async function cargarCatalogo() {
+  try {
+    let desde = 0;
+    for (;;) {
+      const { data, error } = await sb.from(T_CAT).select('id,numero,nombre,img,serie,updated_at').order('id').range(desde, desde + 999);
+      if (error) return;
+      catExtra += anadirAlCatalogo(data.map(r => [r.id, r.numero, r.nombre, r.img, r.serie]));
+      data.forEach(r => { if (!catUltima || r.updated_at > catUltima) catUltima = r.updated_at; });
+      if (data.length < 1000) break; desde += 1000;
+    }
+  } catch (e) {}
+}
+function pintarCatPop() {
+  const ult = catUltima ? new Date(catUltima).toLocaleDateString('es-ES') : '15/11/2026 (catálogo inicial)';
+  $('catPop').innerHTML = `<div class="cath"><b>Actualizar el catálogo de GoodSmile</b><small>Última actualización: ${ult} · ${CATALOGO.length.toLocaleString('es-ES')} figuras en el buscador</small></div>
+    <ol class="catpasos">
+      <li><b>Solo la primera vez:</b> arrastra este botón a tu barra de favoritos.<br>
+        <a class="bmk" id="bmk" href="javascript:${encodeURIComponent(MARCADOR)}" title="Arrástrame a la barra de favoritos">📥 Nendome: novedades</a>
+        <small>¿No ves la barra de favoritos? Pulsa Ctrl+Mayús+B.</small></li>
+      <li><button class="btn" id="catAbrir">Abrir GoodSmile ↗</button> <small>(se abre en otra pestaña)</small></li>
+      <li>En GoodSmile, pulsa el favorito <b>«📥 Nendome: novedades»</b> y espera (1–3 minutos).</li>
+      <li>Cuando termine, pulsa <b>Copiar</b> en el recuadro naranja.</li>
+      <li>Vuelve aquí y pulsa <button class="btn primary" id="catPegar">Pegar novedades</button></li>
+    </ol>
+    <small class="catnota">Solo se añaden figuras nuevas al buscador de «Nueva entrada». Tu colección no se toca.</small>`;
+  $('bmk').onclick = e => { e.preventDefault(); toast('Ese botón se arrastra a la barra de favoritos y se pulsa estando en goodsmile.com'); };
+  $('catAbrir').onclick = () => window.open(`https://www.goodsmile.com/en/search?search_category=6#nendome-max=${maxIdCatalogo()}`, '_blank', 'noopener');
+  $('catPegar').onclick = () => { $('catPop').classList.remove('on'); abrirPegar(); };
+}
+$('btnCat').onclick = () => { pintarCatPop(); $('catPop').classList.toggle('on'); $('expPop').classList.remove('on'); $('menuPop').classList.remove('on'); };
+document.addEventListener('pointerdown', e => { if (!e.target.closest('.menu')) $('catPop').classList.remove('on'); });
+function abrirPegar() {
+  openPop(`<div class="pophead"><h2>Pegar novedades del catálogo</h2><span class="spacer"></span><button class="btn" onclick="closePop()">Cerrar</button></div>
+    <div class="gsid" style="margin-bottom:8px">Haz clic en el recuadro y pega con <b>Ctrl+V</b> lo que copiaste en GoodSmile.</div>
+    <textarea id="catTxt" class="cattxt" placeholder="Pega aquí (Ctrl+V)…"></textarea>
+    <div id="catRes2"></div>`);
+  setTimeout(() => $('catTxt').focus(), 30);
+  $('catTxt').addEventListener('input', revisarPegado);
+}
+function revisarPegado() {
+  let d; try { d = JSON.parse($('catTxt').value.trim()); } catch (e) { $('catRes2').innerHTML = $('catTxt').value.trim() ? '<div class="falta">Eso no parece lo copiado desde «📥 Nendome: novedades». Vuelve a pulsar Copiar en GoodSmile.</div>' : ''; return; }
+  if (!d || d.nendome !== 'catalogo' || !Array.isArray(d.items)) { $('catRes2').innerHTML = '<div class="falta">Eso no es una lista de novedades de Nendome.</div>'; return; }
+  const nuevos = d.items.filter(r => !CAT_BY_ID[String(r[0])]);
+  const ya = d.items.length - nuevos.length;
+  $('catRes2').innerHTML = `<div class="catsum"><b>${nuevos.length} figuras nuevas</b>${ya ? ` · ${ya} ya estaban en el catálogo` : ''}</div>
+    <div class="catlist">${nuevos.slice(0, 200).map(r => `<div class="cat-item">${r[3] ? `<img src="${esc(GS_BASE + r[3])}" referrerpolicy="no-referrer">` : '<span class="lph">?</span>'}<span class="no">${esc(r[1] || '—')}</span><span>${esc(r[2])}${r[4] ? `<br><small>${esc(r[4])}</small>` : ''}</span></div>`).join('')}</div>
+    <div class="modal-foot"><span class="spacer"></span><button class="btn primary" id="catOk"${nuevos.length ? '' : ' disabled'}>Añadir ${nuevos.length} al catálogo</button></div>`;
+  if (nuevos.length) $('catOk').onclick = async () => {
+    $('catOk').disabled = true; $('catOk').textContent = 'Guardando…';
+    const filas = nuevos.map(r => ({ id: +r[0], numero: r[1] || '', nombre: r[2] || '', img: r[3] || '', serie: r[4] || '', updated_at: new Date().toISOString() }));
+    for (const lote of trozos(filas, 200)) {
+      const { error } = await sb.from(T_CAT).upsert(lote, { onConflict: 'id' });
+      if (error) {
+        $('catOk').disabled = false; $('catOk').textContent = 'Reintentar';
+        avisar(/relation|does not exist|schema cache/i.test(error.message || '') ? 'Falta la tabla del catálogo en Supabase. Ejecuta el script nendome_catalogo.sql en el SQL Editor y vuelve a intentarlo.' : 'No he podido guardar en Supabase: ' + error.message);
+        return;
+      }
+    }
+    const n = anadirAlCatalogo(nuevos); catUltima = new Date().toISOString();
+    closePop(); toast(`${n} figuras nuevas en el catálogo · ya puedes buscarlas en «Nueva entrada»`);
+  };
+}
 
 function setTrayW(w) { w = Math.max(200, Math.min(window.innerWidth * 0.75, w)); document.documentElement.style.setProperty('--TW', w + 'px'); }
 
