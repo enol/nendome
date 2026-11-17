@@ -96,10 +96,10 @@ body.resizing,body.resizing *{cursor:col-resize!important}
 .fig .heart{position:absolute;left:2px;top:1px;font-size:14px;line-height:14px;color:#e8466b;text-shadow:0 0 2px #fff,0 0 2px #fff,0 0 2px #fff}
 .fig .bang + .heart{top:16px;left:1px}
 .fig .tick.reservada{background:#d98a00}.fig .tick.enviada{background:#2a78d6}
-.fig .tick{position:absolute;right:2px;bottom:2px;width:14px;height:14px;border-radius:50%;background:#2fa84f;color:#fff;font-size:10px;font-weight:700;line-height:14px;text-align:center;box-shadow:0 0 0 1.5px #fff}
+.fig .tick{position:absolute;right:2px;bottom:2px;width:14px;height:14px;border-radius:50%;background:#39b54a;color:#fff;font-size:10px;font-weight:700;line-height:14px;text-align:center;box-shadow:0 0 0 1.5px #fff}
 .ftog{border:1px solid var(--line);background:#fff;border-radius:999px;height:28px;min-width:28px;padding:0 8px;cursor:pointer;font-size:13px;color:var(--muted);flex:none}
 .ftog.on{color:#fff;border-color:transparent}
-.ftog.f-quiero.on{background:#e8466b}.ftog.f-casa.on{background:#2fa84f}.ftog.f-faltan.on{background:#e03a2f}
+.ftog.f-quiero.on{background:#e8466b}.ftog.f-casa.on{background:#39b54a}.ftog.f-faltan.on{background:#e03a2f}
 .estado{display:flex;gap:6px}
 .estado button{flex:1;border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 6px;cursor:pointer;font-size:13px;color:var(--ink)}
 .estado button.on{border-color:var(--ink);background:var(--ink);color:#fff}
@@ -187,7 +187,7 @@ body:not(.t-coleccion) #selbar, body:not(.t-coleccion) #help, body:not(.t-colecc
 .lrow.quiero:hover{opacity:1}
 .ls{flex:none;display:flex;gap:3px;align-items:center}
 .st{width:18px;height:18px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex:none}
-.st.casa{background:#2fa84f}.st.reservada{background:#d98a00}.st.enviada{background:#2a78d6}.st.quiero{background:none;color:#e8466b;font-size:15px}
+.st.casa{background:#39b54a}.st.reservada{background:#d98a00}.st.enviada{background:#2a78d6}.st.quiero{background:none;color:#e8466b;font-size:15px}
 .st.bang{background:#e03a2f;width:14px;height:14px;font-size:9px}
 .lempty{color:var(--muted);font-size:12px;padding:18px 10px;text-align:center}
 
@@ -373,7 +373,7 @@ details.tbl td:first-child,details.tbl th:first-child{text-align:left}
 .pkn{font-size:11px;padding:4px 8px;background:#faf7f2}
 .pkn .r{display:flex;justify-content:space-between}
 .llegbtn{display:block;width:100%;border:0;border-top:1px solid var(--line);background:#fff;padding:6px;font-size:12px;cursor:pointer;color:#2f8f4f;font-weight:500}
-.pkc.llego .llegbtn{background:#2fa84f;color:#fff}
+.pkc.llego .llegbtn{background:#39b54a;color:#fff}
 .llegbtn:hover{filter:brightness(.97)}
 #ghost .ghostc{box-shadow:0 14px 30px rgba(59,51,48,.3);transform:rotate(-2deg);background:#fff}
 body.pdrag,body.pdrag *{cursor:grabbing!important;user-select:none}
@@ -475,6 +475,27 @@ body.pdrag,body.pdrag *{cursor:grabbing!important;user-select:none}
 .ymh{font-size:15px;text-transform:capitalize}
 .card h3{font-size:14px}
 @media (max-width:1500px){.logo{font-size:20px}}
+
+.mbg.dlg.ancho .dlgbox{width:min(560px,94vw)}
+.duplist{display:flex;flex-direction:column;gap:4px;margin:12px 0 4px;max-height:300px;overflow:auto;color:var(--ink)}
+.duplist .lrow{cursor:default;background:#fff;border:1px solid var(--line)}
+.duplist .lrow .btn{flex:none;font-size:12px;padding:6px 10px}
+.dupnota{margin-top:10px}
+
+.uninota{font-size:13px;color:var(--muted);margin:0 0 12px;line-height:1.45}
+.unilist{max-height:58vh;overflow:auto;display:flex;flex-direction:column;gap:6px;padding-right:4px}
+.unig{display:flex;gap:10px;align-items:flex-start;background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.unig.off{opacity:.55}
+.unidud{font-size:11px;color:#b5740a;margin-top:5px}
+.unichk{padding-top:8px}
+.unib{flex:1;min-width:0}
+.uninom{width:100%;border:1px solid var(--line);border-radius:9px;padding:7px 10px;font:inherit;font-size:14px;font-weight:700;color:var(--ink);background:#fff;outline:0}
+.uninom:focus{border-color:var(--accent)}
+.univ{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.univ button{border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:3px 10px;font:inherit;font-size:12px;color:var(--ink);cursor:pointer;white-space:pre}
+.univ button:hover{border-color:var(--accent)}
+.univ button small{color:var(--muted);margin-left:3px}
+.unifoot{display:flex;align-items:center;gap:8px;margin-top:14px;font-size:13px;color:var(--muted)}
 </style>
 </head>
 <body>
@@ -517,6 +538,7 @@ body.pdrag,body.pdrag *{cursor:grabbing!important;user-select:none}
   <div class="menu">
     <button class="btn icon" id="btnMenu">⋯</button>
     <div class="menu-pop" id="menuPop">
+      <button id="mSeries">Unificar nombres de series…<br><small>Corrige erratas y variantes de escritura</small></button>
       <button id="mImport">Importar copia (.json)…</button>
       <div class="mwho" id="mWho"></div>
       <button id="mLogout">Cerrar sesión</button>
@@ -646,7 +668,7 @@ const CAT_BY_ID = Object.fromEntries(CATALOGO.map(r => [String(r[0]), r]));
 const KEY = 'nendoboard-v1';
 const ESTADOS = { quiero: '♥ Lo quiero', reservada: 'R Reservada', pagado: '€ Pagada', warehouse: 'W Warehouse', enviada: '➜ En camino', casa: '✓ En casa' };
 // icono, color y nombre de cada estado (orden: reservada → pagada → warehouse → en camino → en casa)
-const ICO = { reservada: ['R', '#d98a00', 'Reservada'], pagado: ['€', '#0f9d8a', 'Pagada'], warehouse: ['W', '#7b5cd6', 'Warehouse'], enviada: ['➜', '#2a78d6', 'En camino'], casa: ['✓', '#2fa84f', 'En casa'] };
+const ICO = { reservada: ['R', '#d98a00', 'Reservada'], pagado: ['€', '#0f9d8a', 'Pagada'], warehouse: ['W', '#7b5cd6', 'Warehouse'], enviada: ['➜', '#2a78d6', 'En camino'], casa: ['✓', '#39b54a', 'En casa'] };
 const PEND = ['reservada', 'pagado', 'warehouse', 'enviada'], COMPRADO = [...PEND, 'casa'];
 // la imagen que pegas tú (imgUser) manda siempre sobre la importada (GoodSmile o Excel)
 const imgSrc = f => f.imgUser ? f.imgUser : !f.img ? '' : f.img.startsWith('xl:') ? (XLPICS[f.img.slice(3)] ? 'data:image/jpeg;base64,' + XLPICS[f.img.slice(3)] : '') : f.img;
@@ -1106,6 +1128,7 @@ $('btnNew').onclick = () => openModal(null);
 $('selClear').onclick = () => { sel.clear(); updateSel(); };
 $('selToTray').onclick = () => dropOn({ tray: true });
 $('btnMenu').onclick = () => $('menuPop').classList.toggle('on');
+$('mSeries').onclick = () => { $('menuPop').classList.remove('on'); abrirUnificar(); };
 $('mImport').onclick = () => { $('importFile').click(); $('menuPop').classList.remove('on'); };
 $('importFile').onchange = async e => {
   const file = e.target.files[0]; e.target.value = ''; if (!file) return;
@@ -1247,11 +1270,28 @@ $('catRes').addEventListener('click', e => {
   const it = e.target.closest('.cat-item[data-id]'); if (!it) return;
   const row = CATALOGO.find(r => String(r[0]) === it.dataset.id); if (!row) return;
   const [id, num, name, file, serie] = row;
-  draft.gsId = String(id); draft.img = gsImg(id, file);
-  $('fNum').value = num; $('fName').value = name.replace(/^Nendoroid\s+/i, ''); $('fSerie').value = serie || '';
+  const aplicar = () => {
+    draft.gsId = String(id); draft.img = gsImg(id, file);
+    $('fNum').value = num; $('fName').value = name.replace(/^Nendoroid\s+/i, ''); $('fSerie').value = serie || '';
+    drawImg(); drawGs(); drawFalta(); $('fSerie').focus();
+  };
   $('catRes').classList.remove('on'); $('catQ').value = '';
-  drawImg(); drawGs(); $('fSerie').focus();
+  const dups = duplicadas(String(id), num);
+  if (dups.length) avisoDuplicado(dups, aplicar); else aplicar();
 });
+// ---- evitar duplicados sin querer ----
+function duplicadas(gsId, num) {
+  return Object.values(S.figs).filter(f => f.uid !== editing && ((gsId && f.gsId === gsId) || (num && (f.numero || '').toLowerCase() === String(num).toLowerCase()))).sort(cmpFig);
+}
+function avisoDuplicado(dups, crear) {
+  const filas = dups.map(f => `<div class="lrow dupr" data-uid="${f.uid}">${imgSrc(f) ? `<img src="${esc(imgSrc(f))}" referrerpolicy="no-referrer">` : '<span class="lph">?</span>'}
+    <span class="ln">${esc(f.numero || '—')}</span><div class="lt"><b>${esc(f.nombre || '')}</b><small>${esc((ESTADOS[f.estado] || 'Sin marca'))}${f.tienda ? ' · ' + esc(f.tienda) : ''}${f.compra ? ' · ' + esc(f.compra) : ''}</small></div>
+    <button class="btn" data-abrir="${f.uid}">Abrir y editar</button></div>`).join('');
+  confirmar(dups.length > 1 ? `Ya hay ${dups.length} fichas de este Nendoroid` : 'Ya existe una ficha de este Nendoroid',
+    `<div class="duplist">${filas}</div><div class="dupnota">¿Quieres abrir la que ya existe o crear una nueva igualmente?</div>`, 'Crear otra nueva', () => { draft.dupOk = true; crear(); });
+  $('dlgBg').classList.add('ancho');
+  $('dlgS').querySelectorAll('[data-abrir]').forEach(b => b.onclick = () => { const u = b.dataset.abrir; cerrarDlg(); closeModal(); openModal(u); });
+}
 
 // imagen: clic + Ctrl+V, archivo, arrastrar, o pegar una URL
 $('imgBox').addEventListener('click', () => { $('imgBox').focus(); });
@@ -1293,6 +1333,7 @@ $('mSave').onclick = () => {
   const nombre = $('fName').value.trim(), numero = $('fNum').value.trim();
   if (!nombre && !numero) { toast('Pon al menos un número o un nombre'); return; }
   const lc = leerCompra(); if (lc.err) { avisar(lc.err); return; }
+  if (!editing && !draft.dupOk) { const d = duplicadas(draft.gsId, numero); if (d.length) { avisoDuplicado(d, () => $('mSave').click()); return; } }
   snap();
   const data = { numero, nombre, serie: $('fSerie').value.trim(), tags: parseTags($('fTags').value), img: draft.img, imgUser: draft.imgUser, gsId: draft.gsId, estado: draft.estado, pedido: $('fPedido').value.trim(), paquete: $('fPaq').value, ...readCompra() };
   if (editing) {
@@ -1398,6 +1439,99 @@ function tipHide() { $('tip').style.display = 'none'; }
 document.addEventListener('mousemove', e => { const g = e.target.closest && e.target.closest('[data-tip]'); if (g && !drag) tipShow(e, g.dataset.tip); else tipHide(); });
 function niceStep(max) { const raw = max / 4, p = Math.pow(10, Math.floor(Math.log10(raw))), n = raw / p; return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 5 ? 5 : 10) * p; }
 // barras verticales (apiladas o simples). data: [{label, vals:[...], tip, plus}]
+// agrupa las variantes de una misma serie (temporadas, películas, erratas, nombre japonés/inglés)
+const ALIAS_SERIE = [
+  [/jojo|steel ball run|stell ball run/i, "JoJo's Bizarre Adventure"],
+  [/vocaloid|hatsune miku|\bmiku\b|character vocal|piapro|colorful stage|project sekai|megpoid|gackpoid|kagamine|megurine|virtual vocalist/i, 'Vocaloid'],
+  [/madoka/i, 'Mahou Shoujo Madoka★Magica'],
+  [/kingdom hearts/i, 'Kingdom Hearts'],
+];
+function trozoSerie(s) {
+  let c = String(s).replace(/\s+/g, ' ').split(/\s*[:,(]\s*|\s+[-–—]\s*|\s-|\.\s+(?=[a-z])/i)[0].trim();
+  c = c.replace(/^gekijou?ban\s+/i, '').replace(/\s+(the final season|season\s*\d+|the movie|the animation|the golden)$/i, '');
+  if (!/no\.?\s*\d+$/i.test(c)) c = c.replace(/\s+(i{1,3}|iv|v|vi{1,3}|\d+)$/i, '');
+  return c.trim();
+}
+const claveSerie = c => c.toLowerCase().normalize('NFD').replace(/\bwo\b/g, 'o').replace(/[^a-z0-9]/g, '').replace(/(.)\1+/g, '$1');
+let _franq = null, _franqN = -1;
+function franquicia(s) {
+  s = (s || '').trim(); if (!s || s === '-') return 'Sin serie';
+  const figs = Object.values(S.figs);
+  if (!_franq || _franqN !== figs.length) {          // se recalcula si cambia el nº de fichas
+    _franq = {}; _franqN = figs.length;
+    const vistas = {};
+    figs.forEach(f => { const v = (f.serie || '').trim(); if (!v || v === '-') return; const a = ALIAS_SERIE.find(([re]) => re.test(v)); if (a) { _franq[v] = a[1]; return; } const c = trozoSerie(v), k = claveSerie(c); (vistas[k] = vistas[k] || { n: 0, txt: {} }).n++; vistas[k].txt[c] = (vistas[k].txt[c] || 0) + 1; });
+    const claves = Object.keys(vistas).sort((a, b) => a.length - b.length), raiz = {};
+    claves.forEach(k => { raiz[k] = claves.find(r => r.length >= 6 && r !== k && k.startsWith(r) && raiz[r] === r) || k; });
+    const dobles = x => (x.match(/([a-z])\1/gi) || []).length;   // en empate, el que tenga menos letras repetidas (erratas)
+    const nombre = k => Object.entries(vistas[k].txt).sort((a, b) => b[1] - a[1] || dobles(a[0]) - dobles(b[0]))[0][0];
+    figs.forEach(f => { const v = (f.serie || '').trim(); if (!v || _franq[v]) return; _franq[v] = nombre(raiz[claveSerie(trozoSerie(v))]); });
+  }
+  if (_franq[s]) return _franq[s];
+  const a = ALIAS_SERIE.find(([re]) => re.test(s)); return a ? a[1] : trozoSerie(s);
+}
+// ---- unificar nombres de series (solo erratas y formas de escribir la misma serie) ----
+const ROMANO = /^(i{1,3}|iv|vi{0,3}|ix|x)$/;
+function claveErrata(s) {
+  return String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').split(/[^a-z0-9]+/).filter(Boolean)
+    .map(w => ROMANO.test(w) || /^\d+$/.test(w) ? '#' + w + '#' : w === 'wo' ? 'o' : w.replace(/(.)\1+/g, '$1')).join('');
+}
+function distancia(a, b) {
+  if (Math.abs(a.length - b.length) > 2) return 9;
+  let prev = Array.from({ length: b.length + 1 }, (_, j) => j);
+  for (let i = 1; i <= a.length; i++) { const cur = [i]; let min = i;
+    for (let j = 1; j <= b.length; j++) { cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)); min = Math.min(min, cur[j]); }
+    if (min > 2) return 9; prev = cur; }
+  return prev[b.length];
+}
+function gruposErratas() {
+  const cuenta = {};
+  Object.values(S.figs).forEach(f => { const v = f.serie || ''; if (v.trim() && v.trim() !== '-') cuenta[v] = (cuenta[v] || 0) + 1; });
+  const porClave = {};
+  Object.keys(cuenta).forEach(v => { const k = claveErrata(v); (porClave[k] = porClave[k] || []).push(v); });
+  // erratas de una o dos letras en nombres largos (Shinakki / Shingakki, Kymyou / Kimyou)
+  const claves = Object.keys(porClave), padre = {}; claves.forEach(k => padre[k] = k);
+  const raiz = k => padre[k] === k ? k : (padre[k] = raiz(padre[k]));
+  for (let i = 0; i < claves.length; i++) for (let j = i + 1; j < claves.length; j++) {
+    const a = claves[i], b = claves[j];
+    if (a.length < 12 || b.length < 12 || a.includes('#') || b.includes('#') || a.slice(0, 3) !== b.slice(0, 3)) continue;
+    if (a.replace(/\d/g, '') === b.replace(/\d/g, '') || a.startsWith(b) || b.startsWith(a)) continue;   // números o una palabra añadida = otra temporada/película
+    if (distancia(a, b) <= 2) padre[raiz(a)] = raiz(b);
+  }
+  const g = {}; claves.forEach(k => { (g[raiz(k)] = g[raiz(k)] || []).push(...porClave[k]); });
+  const dobles = x => (x.match(/([a-z])\1/gi) || []).length + (/\s{2}|^\s|\s$/.test(x) ? 1 : 0);
+  return Object.values(g).filter(vs => vs.length > 1).map(vs => {
+    vs.sort((a, b) => cuenta[b] - cuenta[a] || dobles(a) - dobles(b));
+    // si solo cambia un «!», «?» o «×» puede ser otra temporada (Gochuumon wa Usagi Desu ka?? = 2ª): sale desmarcado
+    const simb = v => (v.match(/[!?×x]+$/i) || [''])[0].toLowerCase(), dudoso = new Set(vs.map(v => /[!?×]$/.test(v.trim()) || /××$/.test(v) ? simb(v.trim()) : '')).size > 1;
+    return { variantes: vs.map(v => ({ v, n: cuenta[v] })), nombre: vs[0].trim().replace(/\s+/g, ' '), dudoso };
+  }).sort((a, b) => a.nombre.localeCompare(b.nombre));
+}
+let _grUni = [];
+function abrirUnificar() {
+  _grUni = gruposErratas();
+  if (!_grUni.length) { avisar('No hay series escritas de varias formas: todo está unificado.'); return; }
+  openPop(`<div class="pophead"><h2>Unificar nombres de series</h2><span class="note">${_grUni.length} series escritas de varias formas</span><span class="spacer"></span></div>
+    <p class="uninota">Cada grupo son formas distintas de escribir la misma serie. Revisa el nombre que se quedará (puedes escribirlo o hacer clic en una variante) y desmarca los grupos que no sean la misma serie: por ejemplo, una segunda temporada que solo se diferencia en un «!».</p>
+    <div class="unilist">${_grUni.map((g, i) => `<div class="unig${g.dudoso ? ' off' : ''}" data-i="${i}"><label class="unichk"><input type="checkbox"${g.dudoso ? '' : ' checked'}></label>
+      <div class="unib"><input class="uninom" value="${esc(g.nombre)}">${g.dudoso ? '<div class="unidud">¿Otra temporada? Solo cambian los signos del final; márcalo si es una errata.</div>' : ''}<div class="univ">${g.variantes.map(x => `<button type="button" data-v="${esc(x.v)}">${esc(x.v)} <small>${x.n}</small></button>`).join('')}</div></div></div>`).join('')}</div>
+    <div class="unifoot"><span id="uniRes"></span><span class="spacer"></span><button class="btn" onclick="closePop()">Cancelar</button><button class="btn primary" id="uniOk">Aplicar</button></div>`);
+  const resumen = () => { let g = 0, n = 0; document.querySelectorAll('.unig').forEach(el => { if (!el.querySelector('input[type=checkbox]').checked) return; const gr = _grUni[+el.dataset.i], nom = el.querySelector('.uninom').value.trim(); g++; gr.variantes.forEach(x => { if (x.v !== nom) n += x.n; }); }); $('uniRes').textContent = `${g} grupos marcados · ${n} fichas cambiarán`; };
+  document.querySelectorAll('.unig').forEach(el => {
+    el.querySelector('input[type=checkbox]').onchange = e => { el.classList.toggle('off', !e.target.checked); resumen(); };
+    el.querySelector('.uninom').oninput = resumen;
+    el.querySelectorAll('.univ button').forEach(b => b.onclick = () => { el.querySelector('.uninom').value = b.dataset.v.trim().replace(/\s+/g, ' '); resumen(); });
+  });
+  resumen();
+  $('uniOk').onclick = () => {
+    const mapa = {};
+    document.querySelectorAll('.unig').forEach(el => { if (!el.querySelector('input[type=checkbox]').checked) return; const nom = el.querySelector('.uninom').value.trim(); if (!nom) return; _grUni[+el.dataset.i].variantes.forEach(x => mapa[x.v] = nom); });
+    const cambiar = Object.values(S.figs).filter(f => mapa[f.serie] != null && mapa[f.serie] !== f.serie);
+    if (!cambiar.length) { closePop(); toast('No había nada que cambiar'); return; }
+    snap(); cambiar.forEach(f => f.serie = mapa[f.serie]);
+    _franq = null; closePop(); save(); render(); toast(`${cambiar.length} fichas actualizadas (Ctrl+Z para deshacer)`);
+  };
+}
 function vbars(data, series, fmt, opt = {}) {
   const Wd = 600, Hd = opt.plus ? 252 : 230, L = 56, B = opt.plus ? 48 : 26, T = 8;
   const max = Math.max(1, ...data.map(d => d.vals.reduce((a, b) => a + b, 0)));
@@ -1476,8 +1610,9 @@ function renderDatos() {
   const porCond = Object.entries(cond).map(([k, a]) => ({ label: k, vals: [sumK(a, 'total') / a.length], right: `${eur(sumK(a, 'total') / a.length)} · ${a.length}`, tip: `<b>${k}</b><div class="r"><span>Figuras</span>${a.length}</div><div class="r"><span>Coste medio</span>${eur(sumK(a, 'total') / a.length)}</div>` }));
   const gen = grp(set, f => ({ chica: '♀ Chica', chico: '♂ Chico', otro: '⚧ Otro' }[f.genero]));
   const porGen = Object.entries(gen).sort((a, b) => b[1].length - a[1].length).map(([k, a]) => ({ label: k, vals: [a.length], right: `${a.length} (${Math.round(a.length / set.length * 100)} %)`, tip: `<b>${k}</b><div class="r"><span>Figuras</span>${a.length}</div>` }));
-  const ser = grp(set, f => f.serie);
-  const porSerie = Object.entries(ser).sort((a, b) => b[1].length - a[1].length).slice(0, 15).map(([k, a]) => ({ label: k, vals: [a.length], right: String(a.length), tip: `<b>${esc(k)}</b><div class="r"><span>Figuras</span>${a.length}</div>` }));
+  const ser = grp(set, f => franquicia(f.serie));
+  const porSerie = Object.entries(ser).filter(([k]) => k !== 'Sin serie').sort((a, b) => b[1].length - a[1].length).slice(0, 15).map(([k, a]) => { const vs = grp(a, f => f.serie || '—'), vk = Object.keys(vs);
+    return { label: k, vals: [a.length], right: String(a.length), tip: `<b>${esc(k)}</b><div class="r"><span>Figuras</span>${a.length}</div>` + (vk.length > 1 ? `<div class="sub">${vk.sort((x, y) => vs[y].length - vs[x].length).slice(0, 8).map(v => `${esc(v)} (${vs[v].length})`).join('<br>')}${vk.length > 8 ? '<br>…' : ''}</div>` : '') }; });
   const conOf = set.filter(f => eurOficial(f) != null);
   const pj = grp(conOf, f => f.lanzamiento.slice(0, 4)); const pjYears = Object.keys(pj).sort();
   const porOf = pjYears.map(y => { const a = pj[y], m = a.reduce((s, f) => s + eurOficial(f), 0) / a.length, my = sumK(a, 'precioJPY') / a.length;
@@ -1507,7 +1642,7 @@ function renderDatos() {
       ${card('Gasto por tienda', 'Total gastado · número de figuras', porTienda.length ? hbars(porTienda, [{ c: C1 }], eur0) : vacio('Sin datos.'))}
       ${card('Envío + aduanas por figura, según tienda', 'Media por figura · tiendas con 3 o más compras', extraTienda.length ? legend(S3.slice(1)) + hbars(extraTienda, S3.slice(1), eur) : vacio('Sin datos.'))}
       ${card('Precio oficial medio en euros', 'Precio de salida en Japón (sin impuestos), al cambio medio del BCE del mes de lanzamiento', porOf.length ? vbars(porOf, [{ c: C1 }], eur0) : vacio('Sin datos.'))}
-      ${card('Series con más figuras', 'Top 15 de esta vista', porSerie.length ? hbars(porSerie, [{ c: C1 }], String) : vacio('Sin datos.'))}
+      ${card('Series con más figuras', 'Top 15 de esta vista · temporadas, películas y variantes del nombre van juntas', porSerie.length ? hbars(porSerie, [{ c: C1 }], String) : vacio('Sin datos.'))}
       ${card('Nueva o de segunda mano', 'Coste medio por figura · número de figuras', porCond.length ? hbars(porCond, [{ c: C1 }], eur) : vacio('Sin datos.'))}
       ${card('Por género', 'Figuras de esta vista', porGen.length ? hbars(porGen, [{ c: C1 }], String) : vacio('Sin datos.'))}
     </div>`;
@@ -1544,7 +1679,7 @@ const PM = {
   lanz: ['Fecha de lanzamiento', f => f.lanzamiento || null],
 };
 const PG = { none: 'Sin agrupar', serie: 'Serie', tienda: 'Tienda', genero: 'Género', condicion: 'Condición', anyoCompra: 'Año de compra', anyoLleg: 'Año de llegada', anyoLanz: 'Año de lanzamiento' };
-const PGfn = { serie: f => f.serie || 'Sin serie', tienda: f => f.tienda || 'Sin tienda', genero: f => ({ chica: '♀ Chicas', chico: '♂ Chicos', otro: '⚧ Otros' }[f.genero] || 'Sin género'), condicion: f => ({ nueva: 'Nuevas', segunda: 'Segunda mano' }[f.condicion] || 'Sin condición'), anyoCompra: f => (f.compra || '').slice(0, 4) || 'Sin fecha de compra', anyoLleg: f => (f.fechaLlegada || '').slice(0, 4) || 'Sin fecha de llegada', anyoLanz: f => (f.lanzamiento || '').slice(0, 4) || 'Sin fecha' };
+const PGfn = { serie: f => franquicia(f.serie), tienda: f => f.tienda || 'Sin tienda', genero: f => ({ chica: '♀ Chicas', chico: '♂ Chicos', otro: '⚧ Otros' }[f.genero] || 'Sin género'), condicion: f => ({ nueva: 'Nuevas', segunda: 'Segunda mano' }[f.condicion] || 'Sin condición'), anyoCompra: f => (f.compra || '').slice(0, 4) || 'Sin fecha de compra', anyoLleg: f => (f.fechaLlegada || '').slice(0, 4) || 'Sin fecha de llegada', anyoLanz: f => (f.lanzamiento || '').slice(0, 4) || 'Sin fecha' };
 let PS = { m: 'total', dir: 'desc', g: 'none', go: 'suma', gen: '', tienda: '', cond: '', tipo: '' };
 function fmtM(m, v) { if (v == null) return '—'; if (m === 'compra' || m === 'llegada' || m === 'lanz') return v.split('-').reverse().join('/'); if (m === 'yenes') return '¥' + Math.round(v).toLocaleString('es-ES'); if (m === 'vsEstPct') return (v > 0 ? '+' : '') + v.toFixed(1).replace('.', ',') + ' %'; if (m === 'vsOficial' || m === 'vsEst') return (v > 0 ? '+' : '') + eur(v); return eur(v); }
 function renderPrecio() {
@@ -1605,7 +1740,7 @@ function renderPrecio() {
 $('pPrecio').addEventListener('click', e => { const r = e.target.closest('.prow'); if (r) openModal(r.dataset.uid); });
 
 /* ===================== PEDIDOS: VISTA ANUAL POR MESES ===================== */
-const PQE = { preparando: ['📦', 'Preparando', '#8a8f98'], enviado: ['✈', 'Enviado', '#2a78d6'], aduana: ['🛃', 'En aduana', '#d98a00'], entregado: ['✓', 'Ha llegado', '#2fa84f'] };
+const PQE = { preparando: ['📦', 'Preparando', '#8a8f98'], enviado: ['✈', 'Enviado', '#2a78d6'], aduana: ['🛃', 'En aduana', '#d98a00'], entregado: ['✓', 'Ha llegado', '#39b54a'] };
 const paqNombre = p => `${p.tracking || 'Sin tracking'} · ${mesNombre(p.mes)}`;
 const figsDe = id => Object.values(S.figs).filter(f => f.paquete === id).sort(cmpFig);
 const hoyISO = () => { const d = new Date(); return new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); };
@@ -1838,7 +1973,7 @@ function confirmar(titulo, sub, okTxt, cb) {
   dlgCb = cb; $('dlgBg').classList.add('on'); setTimeout(() => $('dlgNo').focus(), 20);
 }
 function avisar(msg) { confirmar(msg, '', 'Entendido', null); $('dlgNo').style.display = 'none'; setTimeout(() => $('dlgOk').focus(), 20); }
-function cerrarDlg() { $('dlgBg').classList.remove('on'); dlgCb = null; }
+function cerrarDlg() { $('dlgBg').classList.remove('on', 'ancho'); dlgCb = null; }
 $('dlgNo').onclick = cerrarDlg;
 $('dlgOk').onclick = () => { const cb = dlgCb; cerrarDlg(); if (cb) cb(); };
 $('dlgBg').addEventListener('pointerdown', e => { if (e.target === $('dlgBg')) cerrarDlg(); });
