@@ -415,6 +415,11 @@ body.pdrag,body.pdrag *{cursor:grabbing!important;user-select:none}
 
 
 .mwho{font-size:11px;color:var(--muted);padding:8px 12px 4px;border-top:1px solid var(--line);margin-top:4px}
+
+.sync{display:inline-flex;align-items:center;gap:6px}
+.sync i{width:8px;height:8px;border-radius:50%;background:currentColor;flex:none}
+.sync i.vivo{box-shadow:0 0 0 3px rgba(47,143,79,.2)}
+@media (max-width:1560px){.sync span{display:none}}
 </style>
 </head>
 <body>
@@ -1275,8 +1280,9 @@ function renderListas() {
           `<span class="ln">${esc(f.numero || '—')}</span><div class="lt"><b>${esc((f.nombre || '').replace(/^Nendoroid\s*/i, ''))}</b><small>${esc(f.serie || '')}</small></div><span class="ls">${stIcon(f)}</span></div>`;
       }).join('') : '<div class="lempty">Nada que mostrar aquí</div>'}</div></div>`;
   }).join('');
-  const sl = $('pListas').scrollLeft;
+  const sl = $('pListas').scrollLeft, sts = [...document.querySelectorAll('#pListas .lcol-b')].map(e => e.scrollTop);
   $('pListas').innerHTML = html; $('pListas').scrollLeft = sl;
+  document.querySelectorAll('#pListas .lcol-b').forEach((e, i) => { if (sts[i]) e.scrollTop = sts[i]; });
   const filtering = tokens.length || filt.quiero || filt.pend || filt.casa || filt.faltan;
   $('searchWrap').classList.toggle('has', !!$('q').value.trim());
   $('qcount').textContent = filtering ? (shown ? `${shown} de ${total}` : 'sin resultados') : '';
@@ -1758,26 +1764,107 @@ let synced = { figs: {}, est: {} }, syncing = false, otraVez = false, reintentoT
 
 function setSync(st) {
   const el = $('sync'); if (!el) return;
+  ultimoSync = st;
   el.className = 'sync ' + st;
-  el.textContent = { ok: '● Guardado', pend: '● Cambios sin subir', saving: '● Guardando…', error: '⚠ Sin conexión: reintentando' }[st] || '';
+  const txt = { ok: 'Guardado', pend: 'Cambios sin subir', saving: 'Guardando…', error: 'Sin conexión: reintentando' }[st] || '';
+  el.innerHTML = `<i class="${enVivo && st !== 'error' ? 'vivo' : ''}"></i><span>${txt}${enVivo && st !== 'error' ? ' · en vivo' : ''}</span>`;
+  el.classList.toggle('vivo', enVivo);
+  el.title = enVivo ? 'Conectado en tiempo real: los cambios de la otra sesión aparecen al momento' : 'Estado de la sincronización con Supabase';
 }
 const trozos = (arr, n) => { const o = []; for (let i = 0; i < arr.length; i += n) o.push(arr.slice(i, i + n)); return o; };
+
+/* ===================== TIEMPO REAL Y MEZCLA DE CAMBIOS ===================== */
+const J = v => JSON.stringify(v);
+const enVuelo = { figs: {}, est: {} }, ultimaSubida = {};      // lo que se está subiendo ahora (para reconocer el «eco»)
+let canal = null, enVivo = false, ultimoSync = 'ok';
+const CAMPOS = { numero: 'número', nombre: 'nombre', serie: 'serie', tags: 'etiquetas', estado: 'estado', tienda: 'tienda', compra: 'fecha de compra', fechaEnvio: 'fecha de envío', fechaLlegada: 'fecha de llegada', pagado: 'precio', envio: 'envío', aduanas: 'aduana', total: 'total', pedido: 'nº de pedido', paquete: 'paquete', imgUser: 'imagen', img: 'imagen' };
+
+// mezcla campo a campo: lo que solo cambió uno se queda; si cambiaron los dos lo mismo, gana el local
+function mezclarFig(baseS, local, remoto) {
+  const base = baseS ? JSON.parse(baseS) : {};
+  const out = {}, conf = [];
+  new Set([...Object.keys(base), ...Object.keys(local || {}), ...Object.keys(remoto || {})]).forEach(k => {
+    const b = J(base[k]), l = J((local || {})[k]), r = J((remoto || {})[k]);
+    let v;
+    if (l === b) v = (remoto || {})[k];
+    else if (r === b || r === l) v = local[k];
+    else { v = local[k]; if (!['trayTime'].includes(k)) conf.push(k); }
+    if (v !== undefined) out[k] = v;
+  });
+  return { merged: out, conf };
+}
+// mezcla clave a clave (huecos de la estantería, paquetes)
+function mezclarMapa(base, local, remoto) {
+  const out = {};
+  new Set([...Object.keys(base || {}), ...Object.keys(local || {}), ...Object.keys(remoto || {})]).forEach(k => {
+    const b = J((base || {})[k]), l = J((local || {})[k]), r = J((remoto || {})[k]);
+    const v = l === b ? (remoto || {})[k] : (r === b || r === l) ? local[k] : local[k];
+    if (v !== undefined) out[k] = v;
+  });
+  return out;
+}
+function mezclarEst(k, baseS, local, remoto) {
+  if (k === 'shelves') return J(local) === baseS ? remoto : local;
+  const base = baseS ? JSON.parse(baseS) : {};
+  const m = mezclarMapa(base, local, remoto);
+  if (k === 'place') {               // una figura no puede quedar en dos huecos: gana el movimiento local
+    const donde = {};
+    for (const slot in m) (donde[m[slot]] = donde[m[slot]] || []).push(slot);
+    for (const u in donde) if (donde[u].length > 1) {
+      const quedar = donde[u].find(s => (local || {})[s] === u) || donde[u][0];
+      donde[u].forEach(s => { if (s !== quedar) delete m[s]; });
+    }
+  }
+  return m;
+}
+function avisoConflicto(f, conf) {
+  if (!conf.length) return;
+  const campos = [...new Set(conf.map(c => CAMPOS[c] || c))].join(', ');
+  toast(`⚠ ${f.numero || ''} ${f.nombre || ''}: ${campos} cambiado a la vez por los dos · se queda tu versión`);
+}
+
+// «synced» = último estado conocido de Supabase. Se actualiza con los avisos en tiempo real (también el eco de
+// lo que subimos nosotros), que llegan en el orden real de guardado; así la mezcla siempre parte de la verdad.
+const ultimoConocido = (tipo, k) => enVuelo[tipo][k] !== undefined ? enVuelo[tipo][k] : (tipo === 'figs' ? synced.figs[k] : synced.est[k]);
+function confirmarSubida(tipo, k, s) {
+  if (!enVivo) { (tipo === 'figs' ? synced.figs : synced.est)[k] = s; delete enVuelo[tipo][k]; return; }
+  setTimeout(() => {                      // si el eco no llega, damos la subida por buena
+    if (enVuelo[tipo][k] === s) { delete enVuelo[tipo][k]; (tipo === 'figs' ? synced.figs : synced.est)[k] = s; if (pendienteLocal()) save(); }
+  }, 5000);
+}
+const pendienteLocal = () => Object.keys(S.figs).some(u => ultimoConocido('figs', u) !== J(S.figs[u])) || CLAVES.some(k => ultimoConocido('est', k) !== J(S[k]));
 
 async function flush(todo) {
   if (!listo || !sb) return;
   clearTimeout(saveT);
   if (syncing) { otraVez = true; return; }
   syncing = true; setSync('saving');
+  let cambioRemoto = false;
   try {
-    const up = [], del = [], upE = [];
-    for (const u in S.figs) { const s = JSON.stringify(S.figs[u]); if (todo || synced.figs[u] !== s) up.push([u, s]); }
-    for (const u in synced.figs) if (!S.figs[u]) del.push(u);
-    for (const k of CLAVES) { const s = JSON.stringify(S[k]); if (todo || synced.est[k] !== s) upE.push([k, s]); }
+    // 1) figuras
+    let up = Object.keys(S.figs).filter(u => todo || ultimoConocido('figs', u) !== J(S.figs[u]));
+    const del = Object.keys(synced.figs).filter(u => !S.figs[u]);
+    if (!todo && up.length) {
+      for (const lote of trozos(up, 200)) {
+        const { data, error } = await sb.from(T_FIG).select('uid,data').eq('user_id', owner).in('uid', lote);
+        if (error) throw error;
+        data.forEach(r => {
+          const rs = J(r.data);
+          if (rs === enVuelo.figs[r.uid]) { synced.figs[r.uid] = rs; delete enVuelo.figs[r.uid]; return; }
+          if (enVuelo.figs[r.uid] === undefined && rs !== synced.figs[r.uid] && S.figs[r.uid]) {
+            const { merged, conf } = mezclarFig(synced.figs[r.uid], S.figs[r.uid], r.data);
+            S.figs[r.uid] = merged; synced.figs[r.uid] = rs; avisoConflicto(merged, conf); cambioRemoto = true;
+          }
+        });
+      }
+      up = up.filter(u => ultimoConocido('figs', u) !== J(S.figs[u]));
+    }
     const lotes = trozos(up, 100); let hechos = 0;
     for (const lote of lotes) {
-      const { error } = await sb.from(T_FIG).upsert(lote.map(([u, s]) => ({ user_id: owner, uid: u, data: JSON.parse(s), updated_at: new Date().toISOString() })), { onConflict: 'user_id,uid' });
-      if (error) throw error;
-      lote.forEach(([u, s]) => synced.figs[u] = s);
+      const filas = lote.map(u => { const s = J(S.figs[u]); ultimaSubida[u] = { t: Date.now(), antes: synced.figs[u], s }; enVuelo.figs[u] = s; return { user_id: owner, uid: u, data: JSON.parse(s), updated_at: new Date().toISOString() }; });
+      const { error } = await sb.from(T_FIG).upsert(filas, { onConflict: 'user_id,uid' });
+      if (error) { filas.forEach(f => delete enVuelo.figs[f.uid]); throw error; }
+      filas.forEach(f => confirmarSubida('figs', f.uid, J(f.data)));
       hechos += lote.length; if (lotes.length > 2) gateMsg(`Subiendo tus figuras… ${hechos} de ${up.length}`, true);
     }
     for (const lote of trozos(del, 200)) {
@@ -1785,10 +1872,23 @@ async function flush(todo) {
       if (error) throw error;
       lote.forEach(u => delete synced.figs[u]);
     }
-    if (upE.length) {
-      const { error } = await sb.from(T_EST).upsert(upE.map(([k, s]) => ({ user_id: owner, clave: k, data: JSON.parse(s), updated_at: new Date().toISOString() })), { onConflict: 'user_id,clave' });
+    // 2) estanterías, colocación y paquetes
+    let upE = CLAVES.filter(k => todo || ultimoConocido('est', k) !== J(S[k]));
+    if (!todo && upE.length) {
+      const { data, error } = await sb.from(T_EST).select('clave,data').eq('user_id', owner).in('clave', upE);
       if (error) throw error;
-      upE.forEach(([k, s]) => synced.est[k] = s);
+      data.forEach(r => {
+        const rs = J(r.data), k = r.clave;
+        if (rs === enVuelo.est[k]) { synced.est[k] = rs; delete enVuelo.est[k]; return; }
+        if (enVuelo.est[k] === undefined && rs !== synced.est[k]) { S[k] = mezclarEst(k, synced.est[k], S[k], r.data); synced.est[k] = rs; cambioRemoto = true; }
+      });
+      upE = upE.filter(k => ultimoConocido('est', k) !== J(S[k]));
+    }
+    if (upE.length) {
+      const filas = upE.map(k => { const s = J(S[k]); enVuelo.est[k] = s; return { user_id: owner, clave: k, data: JSON.parse(s), updated_at: new Date().toISOString() }; });
+      const { error } = await sb.from(T_EST).upsert(filas, { onConflict: 'user_id,clave' });
+      if (error) { filas.forEach(f => delete enVuelo.est[f.clave]); throw error; }
+      filas.forEach(f => confirmarSubida('est', f.clave, J(f.data)));
     }
     setSync('ok');
   } catch (e) {
@@ -1796,9 +1896,72 @@ async function flush(todo) {
     setSync('error'); clearTimeout(reintentoT); reintentoT = setTimeout(() => flush(), 10000);
   } finally {
     syncing = false;
+    if (cambioRemoto) pintarRemoto();
     if (otraVez) { otraVez = false; flush(); }
   }
 }
+
+// cambios que llegan de Supabase (de la otra sesión o el eco de los nuestros)
+function recibirFig(p) {
+  if (p.eventType === 'DELETE') {
+    const u = p.old && p.old.uid; if (!u || !(u in synced.figs)) return;
+    const loc = S.figs[u] ? J(S.figs[u]) : undefined, base = synced.figs[u];
+    delete synced.figs[u]; delete enVuelo.figs[u];
+    if (loc !== undefined && loc === base) { unplace(u); delete S.figs[u]; sel.delete(u); pintarRemoto(u); }
+    else if (loc !== undefined) save();
+    return;
+  }
+  const r = p.new; if (!r || !r.uid) return;
+  const u = r.uid, rs = J(r.data);
+  if (rs === enVuelo.figs[u]) { synced.figs[u] = rs; delete enVuelo.figs[u]; return; }          // eco nuestro
+  if (rs === synced.figs[u]) return;
+  const loc = S.figs[u] ? J(S.figs[u]) : undefined;
+  if (loc === undefined && synced.figs[u] !== undefined) { synced.figs[u] = rs; return; }          // la has borrado tú
+  const base = synced.figs[u];
+  synced.figs[u] = rs;
+  if (loc === undefined || loc === base || loc === rs) {
+    const us = ultimaSubida[u];          // ¿pisa algo que acabas de cambiar tú? avisar
+    if (us && us.s === base && Date.now() - us.t < 30000) {
+      const a = us.antes ? JSON.parse(us.antes) : {}, m = JSON.parse(base), o = r.data;
+      const pisados = Object.keys(m).filter(k => k !== 'trayTime' && J(a[k]) !== J(m[k]) && J(o[k]) !== J(m[k]));
+      if (pisados.length) toast(`⚠ ${o.numero || ''} ${o.nombre || ''}: la otra sesión ha cambiado ${[...new Set(pisados.map(c => CAMPOS[c] || c))].join(', ')} justo después que tú · se queda su versión`);
+    }
+    S.figs[u] = r.data; pintarRemoto(u); return;
+  }
+  const { merged, conf } = mezclarFig(base, S.figs[u], r.data);
+  S.figs[u] = merged; if (enVuelo.figs[u] === undefined) avisoConflicto(merged, conf);
+  save(); pintarRemoto(u);
+}
+function recibirEst(p) {
+  const r = p.new; if (!r || !CLAVES.includes(r.clave)) return;
+  const k = r.clave, rs = J(r.data);
+  if (rs === enVuelo.est[k]) { synced.est[k] = rs; delete enVuelo.est[k]; return; }
+  if (rs === synced.est[k]) return;
+  const loc = J(S[k]), base = synced.est[k];
+  synced.est[k] = rs;
+  if (loc === base || loc === rs) { S[k] = r.data; pintarRemoto(); return; }
+  S[k] = mezclarEst(k, base, S[k], r.data); save(); pintarRemoto();
+}
+let pintarT = 0, pintarUid = null;
+function pintarRemoto(uid) {
+  if (uid) pintarUid = uid;
+  clearTimeout(pintarT);
+  pintarT = setTimeout(() => {
+    if (drag || pd) { pintarRemoto(); return; }                           // espera a que sueltes lo que arrastras
+    if (editing && pintarUid === editing) toast('Esta figura acaba de cambiar desde la otra sesión: al guardar se mezclan los cambios');
+    pintarUid = null;
+    sel = new Set([...sel].filter(u => S.figs[u]));
+    render();
+  }, 250);
+}
+function suscribir() {
+  if (!sb.channel || canal) return;
+  canal = sb.channel('nendome-' + owner)
+    .on('postgres_changes', { event: '*', schema: 'public', table: T_FIG, filter: 'user_id=eq.' + owner }, recibirFig)
+    .on('postgres_changes', { event: '*', schema: 'public', table: T_EST, filter: 'user_id=eq.' + owner }, recibirEst)
+    .subscribe(st => { enVivo = st === 'SUBSCRIBED'; setSync(ultimoSync); });
+}
+
 const pendiente = () => syncing || $('sync').classList.contains('pend') || $('sync').classList.contains('error');
 window.addEventListener('beforeunload', e => { if (listo && pendiente()) { flush(); e.preventDefault(); e.returnValue = ''; } });
 
@@ -1872,7 +2035,7 @@ async function entrar() {
   }
   const vacio = !Object.keys(st.figs).length;
   S = sanitize(st); hist = []; $('btnUndo').disabled = true;
-  marcarSincronizado(); listo = true; setSync('ok');
+  marcarSincronizado(); listo = true; setSync('ok'); suscribir();
   $('mWho').textContent = owner === user.id ? `Sesión: ${user.email}` : `Sesión: ${user.email} · colección compartida`;
   if (vacio && owner !== user.id) { cerrarGate(); return arrancarUI(); }
   if (vacio) return pantallaVacia();
@@ -1910,12 +2073,13 @@ function pantallaVacia() {
 $('mLogout').onclick = async () => {
   $('menuPop').classList.remove('on');
   if (pendiente()) await flush();
+  if (canal) try { await sb.removeChannel(canal); } catch (e) {}
   await sb.auth.signOut(); location.reload();
 };
 // al volver a la pestaña tras un rato, recoge cambios hechos desde otro sitio
 let ultimaCarga = Date.now();
 window.addEventListener('focus', async () => {
-  if (!listo || pendiente() || Date.now() - ultimaCarga < 60000 || $('modalBg').classList.contains('on') || $('popBg').classList.contains('on')) return;
+  if (!listo || enVivo || pendiente() || Date.now() - ultimaCarga < 60000 || $('modalBg').classList.contains('on') || $('popBg').classList.contains('on')) return;
   ultimaCarga = Date.now();
   try { const st = await cloudLoad(); if (pendiente()) return; S = sanitize(st); marcarSincronizado(); render(); } catch (e) {}
 });
