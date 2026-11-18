@@ -526,6 +526,25 @@ body.pdrag,body.pdrag *{cursor:grabbing!important;user-select:none}
 .tagsug button{display:flex;justify-content:space-between;gap:12px;width:100%;border:0;background:none;text-align:left;font:inherit;font-size:13px;color:var(--ink);padding:6px 9px;border-radius:7px;cursor:pointer}
 .tagsug button.on,.tagsug button:hover{background:var(--bg)}
 .tagsug small{color:var(--muted)}
+
+/* buscador de figuras en el paquete */
+.qbusca{position:relative;margin-bottom:8px}
+.qbusca input{width:100%;border:1px solid var(--line);border-radius:10px;padding:9px 12px;font:inherit;font-size:14px;background:#fff;outline:0}
+.qbusca input:focus{border-color:var(--accent)}
+.qres{display:none;position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:30;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 14px 34px rgba(59,51,48,.18);padding:5px;max-height:300px;overflow:auto}
+.qres.on{display:block}
+.qres .qf{border:0;border-radius:8px}
+.qres .qf.on,.qres .qf:hover{background:var(--bg)}
+.qrh{font-size:11px;color:var(--muted);padding:4px 8px 2px;text-transform:uppercase;letter-spacing:.5px}
+.qf .qft{flex:1;min-width:0}
+.qf .qadd{color:var(--accent);font-weight:700;font-size:16px;padding:0 4px}
+.qf .qx{border:0;background:none;color:var(--muted);cursor:pointer;font-size:13px;padding:4px 6px;border-radius:6px}
+.qf .qx:hover{background:#fbe3e0;color:#d6453a}
+.qvacio{font-size:13px;color:var(--muted);padding:10px}
+#qFigs .qf{cursor:default}
+/* aviso de estanterías fuera de vista */
+#fueraAviso{display:none;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:15;background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:0 14px 40px rgba(59,51,48,.18);padding:14px 16px;align-items:center;gap:14px;font-size:14px}
+#fueraAviso.on{display:flex}
 </style>
 </head>
 <body>
@@ -554,7 +573,7 @@ body.pdrag,body.pdrag *{cursor:grabbing!important;user-select:none}
   <div class="spacer"></div>
   <span class="sync" id="sync" title="Estado de la sincronización con Supabase"></span>
   <button class="btn icon" id="btnUndo" title="Deshacer (Ctrl+Z)">↶</button>
-  <button class="btn icon" id="btnFit" title="Ver todas las estanterías">⤢ Encajar</button>
+  <button class="btn icon" id="btnFit" title="Centrar y ver todas las estanterías">⌖ Centrar</button>
   <div class="menu">
     <button class="btn icon" id="btnCat" title="Añadir al buscador las figuras nuevas de GoodSmile">↻ Catálogo</button>
     <div class="menu-pop catpop" id="catPop"></div>
@@ -592,7 +611,7 @@ body.pdrag,body.pdrag *{cursor:grabbing!important;user-select:none}
     <div id="trayGrid"></div>
   </aside>
   <div id="splitter" title="Arrastra para ensanchar"></div>
-  <section id="view"><div id="world"></div></section>
+  <section id="view"><div id="fueraAviso"><span>Las estanterías se han quedado fuera de la vista</span><button class="btn primary" id="fueraBtn">⌖ Centrar</button></div><div id="world"></div></section>
 </main>
 
 <div id="ghost"></div>
@@ -711,6 +730,7 @@ let S = null;                 // {figs:{}, shelves:[], place:{slotKey:uid}}
 let sel = new Set();          // uids seleccionados (en orden de selección)
 let hist = [];
 let view = { x: 40, y: 30, s: 0.5 };
+const vistaOK = v => v && [v.x, v.y, v.s].every(Number.isFinite) && v.s > 0.05 && v.s < 5;
 let trayTick = 0;
 document.documentElement.style.setProperty('--slotbg', `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='58' height='84'><rect x='8.5' y='6.5' width='41' height='59' rx='5' fill='none' stroke='rgba(90,100,110,.22)' stroke-dasharray='3 3'/></svg>`)}")`);
 
@@ -765,7 +785,7 @@ function sanitize(st) {
   return st;
 }
 function load() {
-  try { const v = JSON.parse(localStorage.getItem(KEY + '-view')); if (v && v.s) view = v; } catch (e) {}
+  try { const v = JSON.parse(localStorage.getItem(KEY + '-view')); if (vistaOK(v)) view = v; else localStorage.removeItem(KEY + '-view'); } catch (e) {}
 }
 let saveT = null;
 function save() {
@@ -909,7 +929,16 @@ function setTab(t) {
 let needFit = true; try { needFit = !localStorage.getItem(KEY + '-view'); } catch (e) {}
 document.querySelectorAll('.tab[data-tab]').forEach(b => b.onclick = () => setTab(b.dataset.tab));
 let rafV = 0, idleT = 0;
+// aviso si las estanterías han quedado fuera de la vista
+function checkFuera() {
+  if (curTab !== 'coleccion') return;
+  const r = $('view').getBoundingClientRect(); if (r.width < 100) return;
+  const vis = [...document.querySelectorAll('.shelf')].some(el => { const e = el.getBoundingClientRect(); return e.right > r.left + 40 && e.left < r.right - 40 && e.bottom > r.top + 40 && e.top < r.bottom - 40; });
+  $('fueraAviso').classList.toggle('on', !vis && S.shelves.length > 0);
+}
 function applyView() {
+  if (!vistaOK(view)) { view = { x: 40, y: 30, s: 0.5 }; needFit = true; requestAnimationFrame(fit); }
+  clearTimeout(applyView._t); applyView._t = setTimeout(checkFuera, 60);
   if (rafV) return;
   rafV = requestAnimationFrame(() => { rafV = 0; $('world').style.transform = `translate(${view.x}px,${view.y}px) scale(${view.s})`; });
   $('world').classList.add('moving'); clearTimeout(idleT);
@@ -973,6 +1002,7 @@ function fit() {
   const r = $('view').getBoundingClientRect();
   let maxX = 0, maxY = 0;
   document.querySelectorAll('.shelf').forEach(el => { maxX = Math.max(maxX, el.offsetLeft + el.offsetWidth); maxY = Math.max(maxY, el.offsetHeight); });
+  if (r.width < 100 || r.height < 100 || !maxX || !maxY) { needFit = true; return; }   // pestaña oculta: se encaja al volver
   const s = Math.min((r.width - 60) / maxX, (r.height - 60) / maxY, 1.2);
   view = { s, x: (r.width - maxX * s) / 2, y: 30 };
   applyView(); saveView();
@@ -1161,6 +1191,8 @@ document.querySelectorAll('#selbar [data-st]').forEach(b => b.onclick = () => {
   sel.forEach(u => { if (S.figs[u]) { S.figs[u].estado = b.dataset.st; if (b.dataset.st === 'vendida') { unplace(u); sel.delete(u); } } }); save(); render();
 });
 $('btnFit').onclick = fit;
+$('fueraBtn').onclick = fit;
+$('fueraAviso').addEventListener('pointerdown', e => e.stopPropagation());
 $('btnNew').onclick = () => openModal(null);
 $('selClear').onclick = () => { sel.clear(); updateSel(); };
 $('selToTray').onclick = () => dropOn({ tray: true });
@@ -1986,7 +2018,7 @@ function sincFechasFig(f) {
 }
 function openPaq(id) {
   const p = id ? S.paquetes[id] : { id: 'p' + Date.now().toString(36), tracking: '', transportista: '', mes: pedYear === hoyMes().slice(0, 4) ? hoyMes() : pedYear + '-01', fechaEnvio: '', estado: 'preparando', envio: null, aduana: null, repartir: false, fechaLlegada: '', notas: '' };
-  const cands = Object.values(S.figs).filter(f => f.paquete === p.id || (PEND.includes(f.estado) && !f.paquete)).sort(cmpFig);
+  const qSel = new Set(figsDe(p.id).map(f => f.uid));
   openPop(`<div class="pophead"><h2>${id ? 'Paquete' : 'Nuevo paquete'}</h2><span class="spacer"></span></div>
     <div class="row3" style="grid-template-columns:1.4fr 1fr 1fr 1fr">
       <div class="f"><label>Nº de seguimiento</label><input id="qTr" value="${esc(p.tracking)}" placeholder="CN1239…"></div>
@@ -2006,11 +2038,40 @@ function openPaq(id) {
       <small>Sustituye lo que tengan en su ficha y se recalcula si cambias el importe o las figuras.</small></div>
     </div>
     <div class="f" style="margin-top:10px"><label>Notas</label><input id="qNo" value="${esc(p.notas || '')}"></div>
-    <div class="fsec" style="margin:16px 0 6px">Figuras del paquete (aparecen las reservadas, pagadas, en warehouse y en camino sin paquete)</div>
-    <div class="qfigs">${cands.map(f => `<label class="qf"><input type="checkbox" value="${f.uid}"${f.paquete === p.id ? ' checked' : ''}>${imgSrc(f) ? `<img src="${esc(imgSrc(f))}" referrerpolicy="no-referrer">` : '<span class="lph">?</span>'}<span><b>${esc(f.numero || '')}</b> ${esc(f.nombre)}<br><small>${esc(f.tienda || '')}${f.pedido ? ' · pedido ' + esc(f.pedido) : ''}</small></span>${stIcon(f)}</label>`).join('') || vacio('No hay figuras reservadas o en camino sin paquete.')}</div>
+    <div class="fsec" style="margin:16px 0 6px">Figuras del paquete <span id="qN"></span></div>
+    <div class="qbusca"><input id="qQ" placeholder="Añadir figura: escribe nº, nombre, tienda o nº de pedido…" autocomplete="off"><div class="qres" id="qRes"></div></div>
+    <div class="qfigs" id="qFigs"></div>
     <div class="modal-foot">
       ${id ? '<button class="btn danger" id="qDel">Eliminar paquete</button>' : ''}
       <span class="spacer"></span><button class="btn" onclick="closePop()">Cancelar</button><button class="btn primary" id="qSave">Guardar</button></div>`);
+  // ---- buscador de figuras del paquete ----
+  const filaFig = (f, quitar) => `<div class="qf" data-u="${f.uid}">${imgSrc(f) ? `<img src="${esc(imgSrc(f))}" referrerpolicy="no-referrer">` : '<span class="lph">?</span>'}<span class="qft"><b>${esc(f.numero || '')}</b> ${esc(f.nombre)}<br><small>${esc(f.tienda || '')}${f.pedido ? ' · pedido ' + esc(f.pedido) : ''}${!quitar && f.paquete && S.paquetes[f.paquete] ? ' · ya en ' + esc(paqNombre(S.paquetes[f.paquete])) : ''}</small></span>${stIcon(f)}${quitar ? `<input type="checkbox" value="${f.uid}" checked hidden><button type="button" class="qx" title="Quitar del paquete">✕</button>` : '<span class="qadd">＋</span>'}</div>`;
+  const pintaSel = () => {
+    const fs = [...qSel].map(u => S.figs[u]).filter(Boolean).sort(cmpFig);
+    $('qFigs').innerHTML = fs.map(f => filaFig(f, true)).join('') || '<div class="qvacio">Aún no hay figuras. Búscalas arriba para añadirlas.</div>';
+    $('qN').textContent = fs.length ? `· ${fs.length}` : '';
+  };
+  let qOpts = [], qI = 0;
+  const pintaRes = () => {
+    const tk = $('qQ').value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    const ok = f => !qSel.has(f.uid) && (!tk.length ? (PEND.includes(f.estado) && !f.paquete) : tk.every(x => matches(f, [x]) || (f.tienda || '').toLowerCase().includes(x) || (f.pedido || '').toLowerCase().includes(x)));
+    const peso = f => (PEND.includes(f.estado) && !f.paquete ? 0 : PEND.includes(f.estado) ? 1 : 2);
+    qOpts = Object.values(S.figs).filter(ok).sort((a, b) => peso(a) - peso(b) || cmpFig(a, b)).slice(0, 30); qI = 0;
+    $('qRes').innerHTML = (tk.length ? '' : '<div class="qrh">Pendientes de recibir sin paquete</div>') + (qOpts.map((f, i) => filaFig(f, false).replace('class="qf"', `class="qf${i === 0 ? ' on' : ''}"`)).join('') || '<div class="qvacio">No hay figuras que coincidan.</div>');
+    $('qRes').classList.add('on');
+  };
+  const anadir = u => { qSel.add(u); pintaSel(); $('qQ').value = ''; pintaRes(); $('qQ').focus(); };
+  $('qQ').addEventListener('input', pintaRes);
+  $('qQ').addEventListener('focus', pintaRes);
+  $('qQ').addEventListener('blur', () => setTimeout(() => $('qRes').classList.remove('on'), 150));
+  $('qQ').addEventListener('keydown', e => {
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); if (!qOpts.length) return; qI = (qI + (e.key === 'ArrowDown' ? 1 : -1) + qOpts.length) % qOpts.length; $('qRes').querySelectorAll('.qf').forEach((r, i) => r.classList.toggle('on', i === qI)); }
+    else if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); if (qOpts[qI]) anadir(qOpts[qI].uid); }
+    else if (e.key === 'Escape') { e.stopPropagation(); $('qRes').classList.remove('on'); }
+  });
+  $('qRes').addEventListener('pointerdown', e => { const r = e.target.closest('.qf[data-u]'); if (!r) return; e.preventDefault(); anadir(r.dataset.u); });
+  $('qFigs').addEventListener('click', e => { const b = e.target.closest('.qx'); if (!b) return; qSel.delete(b.closest('.qf').dataset.u); pintaSel(); });
+  pintaSel();
   let est = p.estado || 'preparando';
   document.querySelectorAll('#qEst button').forEach(b => b.onclick = () => { est = b.dataset.st; document.querySelectorAll('#qEst button').forEach(x => x.classList.toggle('on', x === b)); });
   $('qSave').onclick = () => {
