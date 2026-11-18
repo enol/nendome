@@ -496,6 +496,21 @@ body.pdrag,body.pdrag *{cursor:grabbing!important;user-select:none}
 .univ button:hover{border-color:var(--accent)}
 .univ button small{color:var(--muted);margin-left:3px}
 .unifoot{display:flex;align-items:center;gap:8px;margin-top:14px;font-size:13px;color:var(--muted)}
+
+/* ---------- ficha: pedido/paquete/notas al centro, copiar a la izquierda ---------- */
+.copybtn.izq{width:170px;justify-content:center;margin-top:14px;font-size:12px;padding:7px 8px}
+.pedbloque{margin-top:12px;padding-top:16px;border-top:1px dashed var(--line);display:flex;flex-direction:column;gap:10px}
+#fNotas{width:100%;border:1px solid var(--line);border-radius:10px;padding:8px 10px;font:inherit;font-size:14px;background:#fff;color:var(--ink);outline:0;resize:vertical;min-height:64px}
+#fNotas:focus{border-color:var(--accent)}
+.f.depaq input{background:#f3eee6;color:var(--muted);cursor:not-allowed}
+/* nota: lupa bajo el número */
+.fig .lupa{position:absolute;right:2px;top:14px;width:14px;height:14px;border-radius:50%;background:#2a78d6;color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 1.5px #fff}
+/* vendida: línea roja sobre la foto */
+.fig.vendida .pic::after,.lrow.vendida::after{content:'';position:absolute;pointer-events:none;height:2.5px;background:#e0342a;border-radius:2px;transform:rotate(-38deg)}
+.fig.vendida .pic::after{left:-10%;right:-10%;top:50%}
+.lrow.vendida::after{left:8px;width:36px;top:50%}
+.lrow.vendida{opacity:.7}
+.lrow.vendida .lt b{text-decoration:line-through;text-decoration-color:#e0342a}
 </style>
 </head>
 <body>
@@ -568,7 +583,7 @@ body.pdrag,body.pdrag *{cursor:grabbing!important;user-select:none}
 <div id="marquee"></div>
 <div id="tip"></div>
 <div id="gate" class="gate on"><div class="gbox" id="gbox"><div class="glogo">Nendome</div><div class="gmsg">Cargando…</div></div></div>
-<div id="selbar"><span id="selText"></span><button data-st="quiero">♥ Quiero</button><button data-st="reservada">R Reservada</button><button data-st="pagado">€ Pagada</button><button data-st="warehouse">W Warehouse</button><button data-st="enviada">➜ En camino</button><button data-st="casa">✓ En casa</button><button data-st="">Sin marca</button><button id="selToTray">Mandar a «sin colocar»</button><button id="selClear">Quitar selección</button></div>
+<div id="selbar"><span id="selText"></span><button data-st="quiero">♥ Quiero</button><button data-st="reservada">R Reservada</button><button data-st="pagado">€ Pagada</button><button data-st="warehouse">W Warehouse</button><button data-st="enviada">➜ En camino</button><button data-st="casa">✓ En casa</button><button data-st="vendida">✕ Vendida</button><button data-st="">Sin marca</button><button id="selToTray">Mandar a «sin colocar»</button><button id="selClear">Quitar selección</button></div>
 <div id="help"><b>Clic</b> seleccionar · <b>Mayús+clic</b> añadir a la selección · <b>Mayús+arrastrar</b> recuadro<br><b>Arrastrar título</b> mover estantería · <b>Arrastrar fondo</b> mover vista · <b>Rueda</b> zoom · <b>Doble clic</b> editar · <b>♥ ⏳ ✓ !</b> filtros junto al buscador · <b>Ctrl+Z</b> deshacer</div>
 <div id="toast"></div>
 
@@ -591,6 +606,7 @@ body.pdrag,body.pdrag *{cursor:grabbing!important;user-select:none}
           <button id="imgDel" type="button">quitar</button>
         </div>
         <input type="file" id="imgFile" accept="image/*" hidden>
+        <button type="button" class="btn copybtn izq" id="fCopy" title="Copia «Nº de pedido - Nombre» para pedir a la tienda"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></svg> Copiar info para pedido</button>
       </div>
       <div class="fields">
         <div class="row2">
@@ -598,9 +614,15 @@ body.pdrag,body.pdrag *{cursor:grabbing!important;user-select:none}
           <div class="f"><label>Nombre</label><input id="fName" placeholder="Nendoroid Reg"></div>
         </div>
         <div class="f"><label>Serie (anime, película o juego)</label><input id="fSerie" placeholder=""></div>
-        <div class="f"><label>Estado</label><div class="estado" id="fEstado"><button data-st="">Sin marca</button><button data-st="quiero">♥ Lo quiero</button><button data-st="reservada">R Reservada</button><button data-st="pagado">€ Pagada</button><button data-st="warehouse">W Warehouse</button><button data-st="enviada">➜ En camino</button><button data-st="casa">✓ En casa</button></div></div>
+        <div class="f"><label>Estado</label><div class="estado" id="fEstado"><button data-st="">Sin marca</button><button data-st="quiero">♥ Lo quiero</button><button data-st="reservada">R Reservada</button><button data-st="pagado">€ Pagada</button><button data-st="warehouse">W Warehouse</button><button data-st="enviada">➜ En camino</button><button data-st="casa">✓ En casa</button><button data-st="vendida">✕ Vendida</button></div></div>
         <div class="f"><label>Etiquetas (separa con comas o #)</label><input id="fTags" placeholder="#medieval #fantasía"><div class="chips" id="chips"></div></div>
-        <button type="button" class="btn copybtn" id="fCopy" title="Copia «Nº de pedido - Nombre» para pedir a la tienda"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></svg> Copiar info para pedido</button>
+        <div class="pedbloque">
+          <div class="row2" style="grid-template-columns:1fr 1fr">
+            <div class="f"><label>Nº de pedido de la tienda</label><input id="fPedido" placeholder="HQR…"></div>
+            <div class="f"><label>Paquete</label><select id="fPaq"></select></div>
+          </div>
+          <div class="f"><label>Notas</label><textarea id="fNotas" rows="3" placeholder="Lo que quieras apuntar de esta figura…"></textarea></div>
+        </div>
         <div class="falta" id="fFalta"></div>
         <div class="gsid" id="fGs"></div>
       </div>
@@ -638,10 +660,6 @@ body.pdrag,body.pdrag *{cursor:grabbing!important;user-select:none}
           <div class="f"><label>Total (€) · automático</label><input id="fTot" readonly tabindex="-1" style="background:#f6f1ea;font-weight:700"></div>
         </div>
         <div class="desv" id="fDesv"></div>
-        <div class="row2" style="grid-template-columns:1fr 1fr">
-          <div class="f"><label>Nº de pedido de la tienda</label><input id="fPedido" placeholder="HQR…"></div>
-          <div class="f"><label>Paquete</label><select id="fPaq"></select></div>
-        </div>
       </div>
     </div>
     <div class="modal-foot">
@@ -666,9 +684,9 @@ const CAT_BY_ID = Object.fromEntries(CATALOGO.map(r => [String(r[0]), r]));
 
 /* ===================== ESTADO ===================== */
 const KEY = 'nendoboard-v1';
-const ESTADOS = { quiero: '♥ Lo quiero', reservada: 'R Reservada', pagado: '€ Pagada', warehouse: 'W Warehouse', enviada: '➜ En camino', casa: '✓ En casa' };
+const ESTADOS = { quiero: '♥ Lo quiero', reservada: 'R Reservada', pagado: '€ Pagada', warehouse: 'W Warehouse', enviada: '➜ En camino', casa: '✓ En casa', vendida: '✕ Vendida' };
 // icono, color y nombre de cada estado (orden: reservada → pagada → warehouse → en camino → en casa)
-const ICO = { reservada: ['R', '#d98a00', 'Reservada'], pagado: ['€', '#0f9d8a', 'Pagada'], warehouse: ['W', '#7b5cd6', 'Warehouse'], enviada: ['➜', '#2a78d6', 'En camino'], casa: ['✓', '#39b54a', 'En casa'] };
+const ICO = { reservada: ['R', '#d98a00', 'Reservada'], pagado: ['€', '#0f9d8a', 'Pagada'], warehouse: ['W', '#7b5cd6', 'Warehouse'], enviada: ['➜', '#2a78d6', 'En camino'], casa: ['✓', '#39b54a', 'En casa'], vendida: ['✕', '#d6453a', 'Vendida'] };
 const PEND = ['reservada', 'pagado', 'warehouse', 'enviada'], COMPRADO = [...PEND, 'casa'];
 // la imagen que pegas tú (imgUser) manda siempre sobre la importada (GoodSmile o Excel)
 const imgSrc = f => f.imgUser ? f.imgUser : !f.img ? '' : f.img.startsWith('xl:') ? (XLPICS[f.img.slice(3)] ? 'data:image/jpeg;base64,' + XLPICS[f.img.slice(3)] : '') : f.img;
@@ -771,20 +789,22 @@ function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add
 const sinNumeroOK = n => /^(Nendoroid\s+)?(More|Surprise)/i.test(n || '');
 // qué hay que rellenar según el estado (con «sin marca» no se pide nada)
 const ETAPA_CAMPOS = [
-  { estados: ['quiero', ...COMPRADO], campos: ['imagen', 'numero', 'nombre', 'serie', 'genero', 'lanzamiento', 'precioJPY'] },
-  { estados: COMPRADO, campos: ['tienda', 'condicion', 'compra', 'estimado', 'pedido'] },
-  { estados: ['pagado', 'warehouse', 'enviada', 'casa'], campos: ['pagado'] },
-  { estados: ['enviada', 'casa'], campos: ['fechaEnvio', 'envio', 'paquete'] },
-  { estados: ['casa'], campos: ['fechaLlegada', 'aduanas'] },
+  { estados: ['quiero', ...COMPRADO, 'vendida'], campos: ['imagen', 'numero', 'nombre', 'serie', 'genero', 'lanzamiento', 'precioJPY'] },
+  { estados: [...COMPRADO, 'vendida'], campos: ['tienda', 'condicion', 'compra', 'estimado', 'pedido'] },
+  { estados: ['pagado', 'warehouse', 'enviada', 'casa', 'vendida'], campos: ['pagado'] },
+  { estados: ['enviada', 'casa', 'vendida'], campos: ['fechaEnvio', 'envio', 'paquete'] },
+  { estados: ['casa', 'vendida'], campos: ['fechaLlegada', 'aduanas'] },
 ];
 const NOMBRE_CAMPO = { imagen: 'imagen', numero: 'número', nombre: 'nombre', serie: 'serie', genero: 'género', lanzamiento: 'lanzamiento', precioJPY: 'precio oficial', tienda: 'tienda', condicion: 'condición', compra: 'fecha de compra', estimado: 'coste estimado', pedido: 'nº de pedido', pagado: 'precio de la figura', fechaEnvio: 'fecha de envío', envio: 'envío', paquete: 'paquete', fechaLlegada: 'fecha de llegada', aduanas: 'IVA/aduana' };
 const vacioCampo = v => v == null || v === '';
+const tiendaConPedido = t => /hobby\s*genki|ami\s*ami/i.test(t || '');
 function faltanCampos(f) {
   const out = [];
   ETAPA_CAMPOS.forEach(g => { if (!g.estados.includes(f.estado)) return; g.campos.forEach(k => {
     if (k === 'imagen') { if (!imgSrc(f)) out.push(k); return; }
     if (k === 'numero') { if (!f.numero && !sinNumeroOK(f.nombre)) out.push(k); return; }
     if (k === 'compra') { const c = f.compra || ''; if (c.length < 10) out.push(k); return; }
+    if ((k === 'pedido' || k === 'paquete') && !tiendaConPedido(f.tienda)) return;   // solo Hobby Genki y AmiAmi dan nº de pedido y paquete
     if (vacioCampo(f[k])) out.push(k);
   }); });
   return out;
@@ -801,10 +821,11 @@ function figHTML(f, left) {
   const icons = (fl.length ? `<span class="bang" title="Falta: ${fl.join(', ')}">!</span>` : '') +
     (f.estado === 'quiero' ? '<span class="heart" title="Lo quiero">♥</span>' : '') +
     (ICO[f.estado] ? `<span class="tick" style="background:${ICO[f.estado][1]}" title="${ICO[f.estado][2]}">${ICO[f.estado][0]}</span>` : '');
-  return `<div class="fig${sel.has(f.uid) ? ' sel' : ''}" data-uid="${f.uid}" title="${esc(title)}"${left != null ? ` style="left:${left}px"` : ''}><div class="pic">` +
+  const nota = (f.notas || '').trim() ? `<span class="lupa" title="${esc(f.notas)}"><svg viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"><circle cx="10" cy="10" r="6"/><path d="M15 15l5 5"/></svg></span>` : '';
+  return `<div class="fig${sel.has(f.uid) ? ' sel' : ''}${f.estado === 'vendida' ? ' vendida' : ''}" data-uid="${f.uid}" title="${esc(title)}"${left != null ? ` style="left:${left}px"` : ''}><div class="pic">` +
     `<div class="ph">?</div>` +
     (imgSrc(f) ? `<img src="${esc(imgSrc(f))}" loading="lazy" decoding="async" draggable="false" referrerpolicy="no-referrer" onerror="this.remove()">` : '') +
-    (f.numero ? `<span class="num">${esc(f.numero)}</span>` : '') + icons + `</div><div class="lbl">${short}</div></div>`;
+    (f.numero ? `<span class="num">${esc(f.numero)}</span>` : '') + nota + icons + `</div><div class="lbl">${short}</div></div>`;
 }
 function renderShelves() {
   let h = '';
@@ -818,7 +839,7 @@ function renderShelves() {
         body += `<div class="alt" data-b="${b}" data-a="${a}" style="width:${sh.cols * W}px">`;
         for (let c = 0; c < sh.cols; c++) {
           const u = S.place[`${sh.id}:${b}:${a}:${c}`]; const f = u && S.figs[u];
-          if (f) { used++; body += figHTML(f, c * W + 2); }
+          if (f && f.estado !== 'vendida') { used++; body += figHTML(f, c * W + 2); }
         }
         body += '</div>';
       }
@@ -844,7 +865,7 @@ function layoutShelves(skipEl) {
 function renderTray() {
   const idx = slotIndex();
   const incQ = $('trayQuiero').checked;
-  const list = Object.values(S.figs).filter(f => !idx[f.uid] && (incQ || f.estado !== 'quiero')).sort((a, b) => ((b.trayTime || 0) - (a.trayTime || 0)) || cmpFig(a, b));
+  const list = Object.values(S.figs).filter(f => !idx[f.uid] && f.estado !== 'vendida' && (incQ || f.estado !== 'quiero')).sort((a, b) => ((b.trayTime || 0) - (a.trayTime || 0)) || cmpFig(a, b));
   $('trayCount').textContent = list.length;
   $('trayGrid').innerHTML = list.length ? list.map(f => figHTML(f)).join('') : '<div class="tray-empty">Todo colocado ✨</div>';
 }
@@ -1121,7 +1142,7 @@ document.querySelectorAll('.ftog').forEach(b => b.onclick = () => { filt[b.datas
 $('trayQuiero').onchange = () => { renderTray(); applySearch(); updateSel(); };
 document.querySelectorAll('#selbar [data-st]').forEach(b => b.onclick = () => {
   if (!sel.size) return; snap();
-  sel.forEach(u => { if (S.figs[u]) S.figs[u].estado = b.dataset.st; }); save(); render();
+  sel.forEach(u => { if (S.figs[u]) { S.figs[u].estado = b.dataset.st; if (b.dataset.st === 'vendida') { unplace(u); sel.delete(u); } } }); save(); render();
 });
 $('btnFit').onclick = fit;
 $('btnNew').onclick = () => openModal(null);
@@ -1175,12 +1196,11 @@ function fillCompra(f) {
   $('fReed').checked = !!f.reedicion; $('fBig').checked = !!f.cajaGrande; $('fBasic').checked = !!f.basic; $('fDescat').checked = !!f.cajaDescat; $('fBonus').checked = !!f.bonus;
   $('fJPY').value = numFmt(f.precioJPY); $('fEst').value = numFmt(f.estimado);
   $('fPag').value = numFmt(f.pagado); $('fEnv').value = numFmt(f.envio); $('fAdu').value = numFmt(f.aduanas);
-  $('fPedido').value = f.pedido || '';
+  $('fPedido').value = f.pedido || ''; $('fNotas').value = f.notas || '';
   $('fEnvF').value = f.fechaEnvio || ''; $('fLlegF').value = f.fechaLlegada || '';
-  const pq = f.paquete && S.paquetes[f.paquete];
-  $('fSyncHint').textContent = pq ? `Estas dos fechas se comparten con el paquete ${pq.tracking || 'sin tracking'} y sus ${figsDe(pq.id).length} figuras.` : '';
   $('fPaq').innerHTML = '<option value="">— sin paquete —</option>' + Object.values(S.paquetes || {}).sort((a, b) => (b.mes || '').localeCompare(a.mes || '')).map(p => `<option value="${p.id}">${esc(paqNombre(p))}</option>`).join('');
   $('fPaq').value = f.paquete || '';
+  fechasDePaquete();
   $('tiendas').innerHTML = [...new Set(Object.values(S.figs).map(x => x.tienda).filter(Boolean))].sort().map(t => `<option value="${esc(t)}">`).join('');
   drawDesv();
 }
@@ -1214,6 +1234,14 @@ $('fCMbtn').onclick = () => { $('fCMdrop').classList.toggle('on'); $('fCM').focu
 $('fCMdrop').addEventListener('pointerdown', e => { const b = e.target.closest('[data-m]'); if (!b) return; e.preventDefault(); $('fCM').value = mesTexto(b.dataset.m); cerrarMes(); drawFalta(); });
 $('fCM').addEventListener('keydown', e => { if (e.key === 'ArrowDown') { e.preventDefault(); $('fCMdrop').classList.add('on'); } if (e.key === 'Escape' && $('fCMdrop').classList.contains('on')) { e.stopPropagation(); cerrarMes(); } });
 $('fCM').addEventListener('blur', () => { setTimeout(cerrarMes, 120); const m = parseMes($('fCM').value); if (m) $('fCM').value = mesTexto(m); drawFalta(); });
+// con paquete, las fechas de envío y llegada vienen de él (se cambian en el paquete)
+function fechasDePaquete() {
+  const pq = $('fPaq').value && S.paquetes[$('fPaq').value];
+  ['fEnvF', 'fLlegF'].forEach(id => { $(id).readOnly = !!pq; $(id).closest('.f').classList.toggle('depaq', !!pq); });
+  if (pq) { if (pq.fechaEnvio) $('fEnvF').value = pq.fechaEnvio; if (pq.fechaLlegada) $('fLlegF').value = pq.fechaLlegada; }
+  $('fSyncHint').textContent = pq ? `Fechas del paquete ${pq.tracking || 'sin tracking'}: se cambian desde el paquete, en Pedidos, y se actualizan solas en todas sus figuras.` : '';
+}
+$('fPaq').addEventListener('change', () => { fechasDePaquete(); drawFalta(); });
 function readCompra() {
   const pag = numParse($('fPag').value), env = numParse($('fEnv').value), adu = numParse($('fAdu').value);
   const tot = (pag != null || env != null || adu != null) ? Math.round(((pag || 0) + (env || 0) + (adu || 0)) * 100) / 100 : null;
@@ -1335,17 +1363,18 @@ $('mSave').onclick = () => {
   const lc = leerCompra(); if (lc.err) { avisar(lc.err); return; }
   if (!editing && !draft.dupOk) { const d = duplicadas(draft.gsId, numero); if (d.length) { avisoDuplicado(d, () => $('mSave').click()); return; } }
   snap();
-  const data = { numero, nombre, serie: $('fSerie').value.trim(), tags: parseTags($('fTags').value), img: draft.img, imgUser: draft.imgUser, gsId: draft.gsId, estado: draft.estado, pedido: $('fPedido').value.trim(), paquete: $('fPaq').value, ...readCompra() };
+  const data = { numero, nombre, serie: $('fSerie').value.trim(), tags: parseTags($('fTags').value), img: draft.img, imgUser: draft.imgUser, gsId: draft.gsId, estado: draft.estado, pedido: $('fPedido').value.trim(), paquete: $('fPaq').value, notas: $('fNotas').value.trim(), ...readCompra() };
   if (editing) {
     const f = S.figs[editing];
     const antes = { env: f.fechaEnvio || '', lleg: f.fechaLlegada || '', paq: f.paquete || '' };
     Object.assign(f, data);
-    sincFechasFig(f, antes);
+    sincFechasFig(f);
+    if (f.estado === 'vendida') { unplace(editing); sel.delete(editing); }
     toast('Cambios guardados');
   } else {
     const u = uidNew();
     S.figs[u] = { uid: u, ...data, trayTime: 0 }; toTray(u);
-    sincFechasFig(S.figs[u], { env: '', lleg: '', paq: '' });
+    sincFechasFig(S.figs[u]);
     sel = new Set([u]);
     toast('Añadida a «sin colocar»');
   }
@@ -1400,10 +1429,10 @@ function renderListas() {
     const cnt = e => c.items.filter(f => f.estado === e).length;
     const vis = c.items.filter(f => pass(f) && matches(f, tokens));
     shown += vis.length; total += c.items.length;
-    return `<div class="lcol"><div class="lcol-h"><div class="t">${c.t}</div><div class="s"><span>✓ ${cnt('casa')}</span><span>⏳ ${PEND.reduce((s, e) => s + cnt(e), 0)}</span><span>♥ ${cnt('quiero')}</span><span style="margin-left:auto">${c.items.length} en total</span></div></div>` +
+    return `<div class="lcol"><div class="lcol-h"><div class="t">${c.t}</div><div class="s"><span>✓ ${cnt('casa')}</span><span>⏳ ${PEND.reduce((s, e) => s + cnt(e), 0)}</span><span>♥ ${cnt('quiero')}</span>${cnt('vendida') ? `<span>✕ ${cnt('vendida')}</span>` : ''}<span style="margin-left:auto">${c.items.length} en total</span></div></div>` +
       `<div class="lcol-b">${vis.length ? vis.map(f => {
         const src = imgSrc(f);
-        return `<div class="lrow ${f.estado}" data-uid="${f.uid}">${src ? `<img src="${esc(src)}" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.outerHTML='<div class=lph>?</div>'">` : '<div class="lph">?</div>'}` +
+        return `<div class="lrow ${f.estado}" data-uid="${f.uid}"${(f.notas || '').trim() ? ` title="${esc(f.notas)}"` : ''}>${src ? `<img src="${esc(src)}" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.outerHTML='<div class=lph>?</div>'">` : '<div class="lph">?</div>'}` +
           `<span class="ln">${esc(f.numero || '—')}</span><div class="lt"><b>${esc((f.nombre || '').replace(/^Nendoroid\s*/i, ''))}</b><small>${esc(f.serie || '')}</small></div><span class="ls">${stIcon(f)}</span></div>`;
       }).join('') : '<div class="lempty">Nada que mostrar aquí</div>'}</div></div>`;
   }).join('');
@@ -1583,7 +1612,7 @@ $('popBg').addEventListener('pointerdown', e => { if (e.target === $('popBg')) c
 
 /* ===================== ESTADÍSTICAS ===================== */
 let dScope = 'todo';
-const SCOPES = { todo: ['Todo', COMPRADO], casa: ['✓ En casa', ['casa']], enviada: ['➜ En camino', ['enviada']], warehouse: ['W Warehouse', ['warehouse']], pagado: ['€ Pagadas', ['pagado']], reservada: ['R Reservadas', ['reservada']] };
+const SCOPES = { todo: ['Todo', [...COMPRADO, 'vendida']], casa: ['✓ En casa', ['casa']], enviada: ['➜ En camino', ['enviada']], warehouse: ['W Warehouse', ['warehouse']], pagado: ['€ Pagadas', ['pagado']], reservada: ['R Reservadas', ['reservada']], vendida: ['✕ Vendidas', ['vendida']] };
 const S3 = [{ n: 'Figura', c: C1 }, { n: 'Envío', c: C2 }, { n: 'IVA/aduana', c: C3 }];
 const desglose = (titulo, a) => `<b>${titulo}</b> · ${a.length} figuras<div class="r"><span><i style="background:${C1}"></i>Figura</span>${eur0(sumK(a, 'pagado'))}</div><div class="r"><span><i style="background:${C2}"></i>Envío</span>${eur0(sumK(a, 'envio'))}</div><div class="r"><span><i style="background:${C3}"></i>IVA/aduana</span>${eur0(sumK(a, 'aduanas'))}</div><div class="r"><b>Total</b><b>${eur0(sumK(a, 'total'))}</b></div>`;
 function scopeSet() { const est = SCOPES[dScope][1]; return Object.values(S.figs).filter(f => est.includes(f.estado)); }
@@ -1633,7 +1662,8 @@ function renderDatos() {
       ${kpi('Frente al estimado', (desv > 0 ? '+' : '') + eur0(desv), desv < 0 ? 'has pagado menos de lo calculado' : 'has pagado más de lo calculado')}
       ${kpi('Con fecha de llegada', `${conFecha.length}`, `de ${conCoste.length} con coste`)}
       ${(() => { const all = Object.values(S.figs), w = all.filter(f => f.estado === 'warehouse'), pg = all.filter(f => f.estado === 'pagado'), r = all.filter(f => f.estado === 'reservada'), en = all.filter(f => f.estado === 'enviada');
-        return kpi('Pendiente de recibir', String(w.length + pg.length + r.length + en.length), `W ${w.length} · € ${pg.length} · R ${r.length} · ➜ ${en.length} · ${eur0(sumK([...w, ...pg, ...en], 'total'))} ya pagados`); })()}
+        const vd = all.filter(f => f.estado === 'vendida');
+        return (vd.length ? kpi('Vendidas', String(vd.length), `${eur0(sumK(vd, 'total'))} lo que costaron`) : '') + kpi('Pendiente de recibir', String(w.length + pg.length + r.length + en.length), `W ${w.length} · € ${pg.length} · R ${r.length} · ➜ ${en.length} · ${eur0(sumK([...w, ...pg, ...en], 'total'))} ya pagados`); })()}
     </div>
     ${sinFechaMsg}
     <div class="grid2">
@@ -1853,7 +1883,7 @@ $('pPedidos').addEventListener('click', e => {
 $('pPedidos').addEventListener('change', e => {
   const i = e.target.closest('.pin'); if (!i) return;
   snap(); const f = S.figs[i.dataset.uid]; const antes = { env: f.fechaEnvio || '', lleg: f.fechaLlegada || '', paq: f.paquete || '' };
-  f[i.dataset.k] = i.value.trim(); if (i.dataset.k === 'paquete') sincFechasFig(f, antes); save();
+  f[i.dataset.k] = i.value.trim(); if (i.dataset.k === 'paquete') sincFechasFig(f); save();
   if (i.dataset.k === 'paquete') renderPedidos();
   toast('Guardado');
 });
@@ -1906,16 +1936,10 @@ document.addEventListener('pointerup', e => {
 // fechas de envío y llegada: las comparten el paquete y todas sus figuras
 const PARES = [['fechaEnvio', 'fechaEnvio'], ['fechaLlegada', 'fechaLlegada']];
 function propagarPaq(p) { figsDe(p.id).forEach(f => PARES.forEach(([fk, pk]) => { if (p[pk]) f[fk] = p[pk]; })); }
-function sincFechasFig(f, antes) {
+// las fechas de envío y llegada las manda el paquete: la ficha las copia y no se editan desde ella
+function sincFechasFig(f) {
   const p = f.paquete && S.paquetes[f.paquete]; if (!p) return;
-  if (antes.paq !== f.paquete) {       // recién metida en el paquete: manda el paquete; si el paquete no tiene, se queda la de la ficha
-    PARES.forEach(([fk, pk]) => { if (p[pk]) f[fk] = p[pk]; else if (f[fk]) p[pk] = f[fk]; });
-    propagarPaq(p); return;
-  }
-  const cambios = [];                  // editada en la ficha: pasa al paquete y a las demás figuras
-  if ((f.fechaEnvio || '') !== antes.env) { p.fechaEnvio = f.fechaEnvio || ''; cambios.push('fechaEnvio'); }
-  if ((f.fechaLlegada || '') !== antes.lleg) { p.fechaLlegada = f.fechaLlegada || ''; cambios.push('fechaLlegada'); }
-  figsDe(p.id).forEach(g => cambios.forEach(k => g[k] = p[k]));
+  PARES.forEach(([fk, pk]) => { if (p[pk]) f[fk] = p[pk]; });
 }
 function openPaq(id) {
   const p = id ? S.paquetes[id] : { id: 'p' + Date.now().toString(36), tracking: '', transportista: '', mes: pedYear === hoyMes().slice(0, 4) ? hoyMes() : pedYear + '-01', fechaEnvio: '', estado: 'preparando', envio: null, aduana: null, repartir: false, fechaLlegada: '', notas: '' };
@@ -1948,6 +1972,7 @@ function openPaq(id) {
   document.querySelectorAll('#qEst button').forEach(b => b.onclick = () => { est = b.dataset.st; document.querySelectorAll('#qEst button').forEach(x => x.classList.toggle('on', x === b)); });
   $('qSave').onclick = () => {
     snap();
+    const antesP = { fechaEnvio: p.fechaEnvio || '', fechaLlegada: p.fechaLlegada || '' }, antesFigs = new Set(figsDe(p.id).map(f => f.uid));
     Object.assign(p, { tracking: $('qTr').value.trim(), transportista: $('qTp').value.trim(), fechaEnvio: $('qFp').value, mes: $('qMes').value || p.mes, estado: est, fechaLlegada: $('qLl').value,
       envio: numParse($('qEn').value), aduana: numParse($('qAd').value), repartir: $('qRep').checked, repartirEnvio: $('qRepEnv').checked, notas: $('qNo').value.trim() });
     S.paquetes[p.id] = p;
@@ -1957,7 +1982,10 @@ function openPaq(id) {
     marcadas.forEach(u => { const f = S.figs[u]; f.paquete = p.id;
       if ((est === 'enviado' || est === 'aduana') && ['reservada', 'pagado', 'warehouse'].includes(f.estado)) { f.estado = 'enviada'; cambiadas++; }
       if (est === 'entregado' && PEND.includes(f.estado)) { f.estado = 'casa'; cambiadas++; } });
-    propagarPaq(p);
+    figsDe(p.id).forEach(f => PARES.forEach(([fk, pk]) => {
+      if ((p[pk] || '') !== antesP[pk]) f[fk] = p[pk] || '';          // cambiada o borrada en el paquete
+      else if (p[pk] && (!antesFigs.has(f.uid) || f[fk] !== p[pk])) f[fk] = p[pk];
+    }));
     save(); closePop(); render();
     if (cambiadas) toast(`${cambiadas} figuras cambian de estado`);
   };
