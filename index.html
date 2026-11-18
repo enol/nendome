@@ -545,6 +545,12 @@ body.pdrag,body.pdrag *{cursor:grabbing!important;user-select:none}
 /* aviso de estanterías fuera de vista */
 #fueraAviso{display:none;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:15;background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:0 14px 40px rgba(59,51,48,.18);padding:14px 16px;align-items:center;gap:14px;font-size:14px}
 #fueraAviso.on{display:flex}
+
+/* cursor de texto y caret visibles en todas las casillas */
+input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]),textarea{cursor:text!important;user-select:text!important;-webkit-user-select:text!important;caret-color:#3b3330}
+input[readonly]{cursor:default!important}
+.f.depaq input{cursor:not-allowed!important}
+#qFigs{margin-bottom:10px}
 </style>
 </head>
 <body>
@@ -1020,6 +1026,9 @@ $('view').addEventListener('wheel', e => {
 let drag = null;
 const ghost = $('ghost'), marquee = $('marquee');
 
+const limpiarArrastre = () => document.body.classList.remove('pdrag', 'resizing');
+window.addEventListener('blur', limpiarArrastre);
+document.addEventListener('pointerup', () => setTimeout(() => { if (!drag && !pd) limpiarArrastre(); }, 0), true);
 document.addEventListener('pointerdown', e => {
   if (e.button !== 0 || $('modalBg').classList.contains('on')) return;
   if (e.target.closest('#splitter')) { drag = { type: 'split', x0: e.clientX, y0: e.clientY, w: $('tray').offsetWidth }; $('splitter').classList.add('on'); document.body.classList.add('resizing'); e.preventDefault(); return; }
@@ -2039,8 +2048,8 @@ function openPaq(id) {
     </div>
     <div class="f" style="margin-top:10px"><label>Notas</label><input id="qNo" value="${esc(p.notas || '')}"></div>
     <div class="fsec" style="margin:16px 0 6px">Figuras del paquete <span id="qN"></span></div>
-    <div class="qbusca"><input id="qQ" placeholder="Añadir figura: escribe nº, nombre, tienda o nº de pedido…" autocomplete="off"><div class="qres" id="qRes"></div></div>
     <div class="qfigs" id="qFigs"></div>
+    <div class="qbusca"><input id="qQ" placeholder="Añadir figura: escribe nº, nombre, tienda o nº de pedido…" autocomplete="off"><div class="qres" id="qRes"></div></div>
     <div class="modal-foot">
       ${id ? '<button class="btn danger" id="qDel">Eliminar paquete</button>' : ''}
       <span class="spacer"></span><button class="btn" onclick="closePop()">Cancelar</button><button class="btn primary" id="qSave">Guardar</button></div>`);
