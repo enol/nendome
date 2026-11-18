@@ -511,6 +511,21 @@ body.pdrag,body.pdrag *{cursor:grabbing!important;user-select:none}
 .lrow.vendida::after{left:8px;width:36px;top:50%}
 .lrow.vendida{opacity:.7}
 .lrow.vendida .lt b{text-decoration:line-through;text-decoration-color:#e0342a}
+
+/* lupa negra y en todas las pestañas */
+.fig .lupa{background:#2b2522!important}
+.st.lupa{background:#2b2522;width:14px;height:14px}
+.fci .st.lupa{left:-4px;bottom:-4px;right:auto;top:auto;width:14px;height:14px}
+.ftog.f-notas{display:inline-flex;align-items:center;justify-content:center}
+.ftog.f-notas.on{background:#2b2522}
+/* sugerencias de etiquetas */
+.tagwrap{position:relative}
+.tagwrap input{width:100%}
+.tagsug{display:none;position:absolute;left:0;top:calc(100% + 4px);z-index:20;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 10px 26px rgba(59,51,48,.15);padding:4px;min-width:200px}
+.tagsug.on{display:block}
+.tagsug button{display:flex;justify-content:space-between;gap:12px;width:100%;border:0;background:none;text-align:left;font:inherit;font-size:13px;color:var(--ink);padding:6px 9px;border-radius:7px;cursor:pointer}
+.tagsug button.on,.tagsug button:hover{background:var(--bg)}
+.tagsug small{color:var(--muted)}
 </style>
 </head>
 <body>
@@ -533,6 +548,7 @@ body.pdrag,body.pdrag *{cursor:grabbing!important;user-select:none}
     <button class="ftog f-pend" data-f="pend" title="Solo reservadas o en camino">⏳</button>
     <button class="ftog f-casa" data-f="casa" title="Solo las que ya están en casa">✓</button>
     <button class="ftog f-faltan" data-f="faltan" title="Solo las que tienen datos sin rellenar">!</button>
+    <button class="ftog f-notas" data-f="notas" title="Solo las que tienen notas"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"><circle cx="10" cy="10" r="6"/><path d="M15 15l5 5"/></svg></button>
     <button class="x" id="qclear" title="Limpiar">✕</button>
   </div>
   <div class="spacer"></div>
@@ -615,7 +631,7 @@ body.pdrag,body.pdrag *{cursor:grabbing!important;user-select:none}
         </div>
         <div class="f"><label>Serie (anime, película o juego)</label><input id="fSerie" placeholder=""></div>
         <div class="f"><label>Estado</label><div class="estado" id="fEstado"><button data-st="">Sin marca</button><button data-st="quiero">♥ Lo quiero</button><button data-st="reservada">R Reservada</button><button data-st="pagado">€ Pagada</button><button data-st="warehouse">W Warehouse</button><button data-st="enviada">➜ En camino</button><button data-st="casa">✓ En casa</button><button data-st="vendida">✕ Vendida</button></div></div>
-        <div class="f"><label>Etiquetas (separa con comas o #)</label><input id="fTags" placeholder="#medieval #fantasía"><div class="chips" id="chips"></div></div>
+        <div class="f"><label>Etiquetas (separa con comas o #)</label><div class="tagwrap"><input id="fTags" placeholder="#medieval #fantasía" autocomplete="off"><div class="tagsug" id="tagSug"></div></div><div class="chips" id="chips"></div></div>
         <div class="pedbloque">
           <div class="row2" style="grid-template-columns:1fr 1fr">
             <div class="f"><label>Nº de pedido de la tienda</label><input id="fPedido" placeholder="HQR…"></div>
@@ -821,7 +837,7 @@ function figHTML(f, left) {
   const icons = (fl.length ? `<span class="bang" title="Falta: ${fl.join(', ')}">!</span>` : '') +
     (f.estado === 'quiero' ? '<span class="heart" title="Lo quiero">♥</span>' : '') +
     (ICO[f.estado] ? `<span class="tick" style="background:${ICO[f.estado][1]}" title="${ICO[f.estado][2]}">${ICO[f.estado][0]}</span>` : '');
-  const nota = (f.notas || '').trim() ? `<span class="lupa" title="${esc(f.notas)}"><svg viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"><circle cx="10" cy="10" r="6"/><path d="M15 15l5 5"/></svg></span>` : '';
+  const nota = (f.notas || '').trim() ? `<span class="lupa" title="${esc(f.notas)}">${LUPA_SVG}</span>` : '';
   return `<div class="fig${sel.has(f.uid) ? ' sel' : ''}${f.estado === 'vendida' ? ' vendida' : ''}" data-uid="${f.uid}" title="${esc(title)}"${left != null ? ` style="left:${left}px"` : ''}><div class="pic">` +
     `<div class="ph">?</div>` +
     (imgSrc(f) ? `<img src="${esc(imgSrc(f))}" loading="lazy" decoding="async" draggable="false" referrerpolicy="no-referrer" onerror="this.remove()">` : '') +
@@ -916,13 +932,13 @@ function matches(f, tokens) {
   });
 }
 let hits = [];
-const filt = { quiero: false, pend: false, casa: false, faltan: false };
+const filt = { quiero: false, pend: false, casa: false, faltan: false, notas: false };
 function pass(f) {
   const est = [];
   if (filt.quiero) est.push('quiero');
   if (filt.pend) est.push(...PEND);
   if (filt.casa) est.push('casa');
-  return (!est.length || est.includes(f.estado)) && (!filt.faltan || faltan(f).length > 0);
+  return (!est.length || est.includes(f.estado)) && (!filt.faltan || faltan(f).length > 0) && (!filt.notas || tieneNota(f));
 }
 function qTokens() { return $('q').value.trim().toLowerCase().split(/\s+/).filter(Boolean); }
 function applySearch() {
@@ -934,7 +950,7 @@ function applySearch() {
   $('searchWrap').classList.toggle('has', !!q);
   const tokens = q.split(/\s+/).filter(Boolean);
   hits = [];
-  const anyF = filt.quiero || filt.pend || filt.casa || filt.faltan;
+  const anyF = filt.quiero || filt.pend || filt.casa || filt.faltan || filt.notas;
   if (!tokens.length && !anyF) { document.querySelectorAll('.fig').forEach(el => el.classList.remove('dim', 'hit')); $('qcount').textContent = ''; return; }
   let nShelf = 0, nTray = 0;
   document.querySelectorAll('#world .fig, #trayGrid .fig').forEach(el => {
@@ -1277,6 +1293,31 @@ function drawFalta() {
 function drawChips() { $('chips').innerHTML = parseTags($('fTags').value).map(t => `<span class="chip">#${esc(t)}</span>`).join(''); }
 function drawGs() { $('fGs').textContent = draft.gsId ? `Enlazada a GoodSmile · producto ${draft.gsId}` : ''; }
 $('fTags').addEventListener('input', drawChips);
+// autocompletar etiquetas ya usadas en otras fichas
+let tagSel = 0, tagOpts = [];
+function tagParcial() { const v = $('fTags').value, i = Math.max(v.lastIndexOf('#'), v.lastIndexOf(',')); return { ini: i + 1, txt: v.slice(i + 1).trim().toLowerCase() }; }
+function drawTagSug() {
+  const { txt } = tagParcial(), ya = new Set(parseTags($('fTags').value));
+  const todas = {}; Object.values(S.figs).forEach(f => (f.tags || []).forEach(x => todas[x] = (todas[x] || 0) + 1));
+  tagOpts = txt ? Object.keys(todas).filter(x => x.startsWith(txt) && x !== txt && !(ya.has(x) && x !== txt)).sort((a, b) => todas[b] - todas[a] || a.localeCompare(b)).slice(0, 8) : [];
+  tagSel = 0;
+  $('tagSug').innerHTML = tagOpts.map((x, i) => `<button type="button" data-t="${esc(x)}" class="${i === 0 ? 'on' : ''}">#${esc(x)} <small>${todas[x]}</small></button>`).join('');
+  $('tagSug').classList.toggle('on', tagOpts.length > 0);
+}
+function elegirTag(x) {
+  const v = $('fTags').value, { ini } = tagParcial();
+  let antes = v.slice(0, ini); if (!/[#,]$/.test(antes)) antes += (antes.trim() ? ' #' : '#');
+  $('fTags').value = antes + x + ' #'; $('tagSug').classList.remove('on'); drawChips(); $('fTags').focus();
+}
+$('fTags').addEventListener('input', drawTagSug);
+$('fTags').addEventListener('keydown', e => {
+  if (!$('tagSug').classList.contains('on')) return;
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); tagSel = (tagSel + (e.key === 'ArrowDown' ? 1 : -1) + tagOpts.length) % tagOpts.length; $('tagSug').querySelectorAll('button').forEach((b, i) => b.classList.toggle('on', i === tagSel)); }
+  else if (e.key === 'Enter' || e.key === 'Tab') { e.preventDefault(); e.stopPropagation(); elegirTag(tagOpts[tagSel]); }
+  else if (e.key === 'Escape') { e.stopPropagation(); $('tagSug').classList.remove('on'); }
+});
+$('fTags').addEventListener('blur', () => setTimeout(() => $('tagSug').classList.remove('on'), 150));
+$('tagSug').addEventListener('pointerdown', e => { const b = e.target.closest('[data-t]'); if (!b) return; e.preventDefault(); elegirTag(b.dataset.t); });
 
 // catálogo
 const ownedGs = () => new Set(Object.values(S.figs).map(f => f.gsId).filter(Boolean));
@@ -1407,8 +1448,10 @@ function cmpFig(a, b) {
   return ka.suf.localeCompare(kb.suf) || (a.nombre || '').localeCompare(b.nombre || '');
 }
 const pad4 = n => String(n).padStart(4, '0');
+const LUPA_SVG = '<svg viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"><circle cx="10" cy="10" r="6"/><path d="M15 15l5 5"/></svg>';
+const tieneNota = f => !!(f.notas || '').trim();
 function stIcon(f) {
-  return (faltan(f).length ? `<span class="st bang" title="Falta: ${faltan(f).join(', ')}">!</span>` : '') +
+  return (tieneNota(f) ? `<span class="st lupa" title="${esc(f.notas)}">${LUPA_SVG}</span>` : '') + (faltan(f).length ? `<span class="st bang" title="Falta: ${faltan(f).join(', ')}">!</span>` : '') +
     (f.estado === 'quiero' ? '<span class="st quiero" title="Lo quiero">♥</span>' : ICO[f.estado] ? `<span class="st" style="background:${ICO[f.estado][1]}" title="${ICO[f.estado][2]}">${ICO[f.estado][0]}</span>` : '');
 }
 function renderListas() {
@@ -1439,7 +1482,7 @@ function renderListas() {
   const sl = $('pListas').scrollLeft, sts = [...document.querySelectorAll('#pListas .lcol-b')].map(e => e.scrollTop);
   $('pListas').innerHTML = html; $('pListas').scrollLeft = sl;
   document.querySelectorAll('#pListas .lcol-b').forEach((e, i) => { if (sts[i]) e.scrollTop = sts[i]; });
-  const filtering = tokens.length || filt.quiero || filt.pend || filt.casa || filt.faltan;
+  const filtering = tokens.length || filt.quiero || filt.pend || filt.casa || filt.faltan || filt.notas;
   $('searchWrap').classList.toggle('has', !!$('q').value.trim());
   $('qcount').textContent = filtering ? (shown ? `${shown} de ${total}` : 'sin resultados') : '';
 }
@@ -1716,7 +1759,7 @@ function renderPrecio() {
   const el = $('pPrecio');
   const tokens = qTokens();
   const casa = Object.values(S.figs).filter(f => f.estado === 'casa');
-  let list = casa.filter(f => matches(f, tokens) && (!filt.faltan || faltan(f).length) &&
+  let list = casa.filter(f => matches(f, tokens) && (!filt.faltan || faltan(f).length) && (!filt.notas || tieneNota(f)) &&
     (!PS.gen || f.genero === PS.gen) && (!PS.tienda || f.tienda === PS.tienda) && (!PS.cond || f.condicion === PS.cond) && (!PS.tipo || f[PS.tipo]));
   const get = PM[PS.m][1], isDate = PS.m === 'compra' || PS.m === 'llegada' || PS.m === 'lanz';
   const val = f => get(f);
