@@ -581,6 +581,11 @@ input[readonly]{cursor:default!important}
 .vrow .vpre b{display:block;font-size:14px}
 .vrow .vpre small{font-size:11px;font-weight:700}
 .vrow:hover{background:var(--bg)}
+.sinf.busq{background:#eef4fc;border-color:#c9daf2}
+.otrosy{margin:-4px 0 12px;font-size:13px;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.otroy{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:3px 11px;font:inherit;font-size:13px;color:var(--ink);cursor:pointer}
+.otroy:hover{border-color:var(--accent)}
+.otroy small{color:var(--muted);margin-left:3px}
 </style>
 </head>
 <body>
@@ -1995,10 +2000,10 @@ function aplicarRepartos() {
 }
 // cambia el mes de una fecha conservando el día (ajustado a la longitud del mes)
 function moverAMes(fecha, ym) {
-  if (!fecha || fecha.length < 10) return ym;     // sin día: queda como año-mes
-  const d = +fecha.slice(8, 10);
   const [y, m] = ym.split('-').map(Number);
   const last = new Date(y, m, 0).getDate();
+  if (!fecha || fecha.length < 10) return `${ym}-${String(last).padStart(2, '0')}`;     // sin día: el último del mes
+  const d = +fecha.slice(8, 10);
   return `${ym}-${String(Math.min(d || 1, last)).padStart(2, '0')}`;
 }
 
@@ -2052,7 +2057,11 @@ function renderPedidos() {
       <div class="ypaqs">${vp.map(pcard).join('')}</div>
       <div class="ytot"><b>Coste total mensual</b><div class="r"><span>Solo nendos</span>${eur(nend)}</div><div class="r"><span>Solo paquetes</span>${eur(env)}</div><div class="r"><span>Solo aduanas</span>${eur(adu)}</div><div class="r tot"><span>Total</span><b>${eur(nend + env + adu)}</b></div></div></div>`;
   }).join('');
-  const sinFecha = all.filter(f => PEND.includes(f.estado) && !f.compra).filter(okF).sort(cmpFig);
+  // buscando: salen todas las figuras que coinciden y no tienen fecha de compra completa (cualquier estado), para arrastrarlas a su mes
+  const buscando = tokens.length > 0;
+  const sinFecha = all.filter(f => buscando ? (f.estado && (f.compra || '').length < 7 && f.compra !== pedYear) : (PEND.includes(f.estado) && !f.compra)).filter(okF).sort(cmpFig);
+  const otrosAnyos = {}; if (buscando) all.filter(okF).forEach(f => { const y = (f.compra || '').slice(0, 4); if (/^\d{4}$/.test(y) && y !== pedYear) otrosAnyos[y] = (otrosAnyos[y] || 0) + 1; });
+  const otrosTxt = Object.keys(otrosAnyos).sort().reverse().map(y => `<button class="otroy" data-year="${y}">${y} <small>${otrosAnyos[y]}</small></button>`).join('');
   const soloAnyoF = all.filter(f => f.compra === pedYear).filter(okF).sort(cmpFig);
   const soloAnyoP = paqs.filter(p => p.mes === pedYear).filter(okP);
   const yTot = all.filter(f => (f.compra || '').startsWith(pedYear)).reduce((s, f) => s + (+f.total || 0), 0);
@@ -2060,10 +2069,12 @@ function renderPedidos() {
       <div class="ytabs">${ylist.map(y => `<button class="ytab${y === pedYear ? ' on' : ''}${y > cur ? ' fut' : ''}" data-year="${y}">${y}</button>`).join('')}</div>
       <span class="note">${pedYear}: ${all.filter(f => (f.compra || '').startsWith(pedYear)).length} figuras · ${paqs.filter(p => (p.mes || '').startsWith(pedYear)).length} paquetes · ${eur(yTot)}</span>
       <span class="spacer"></span><button class="btn primary big" id="btnPaq">+ Nuevo paquete</button></div>
-    ${sinFecha.length ? `<div class="sinf"><div class="sinfh"><b>Pendientes de recibir sin fecha de compra</b> <span>${sinFecha.length} · arrástralas al mes en que las pediste</span></div><div class="sinfl">${sinFecha.map(fcard).join('')}</div></div>` : ''}
+    ${sinFecha.length ? `<div class="sinf${buscando ? ' busq' : ''}"><div class="sinfh"><b>${buscando ? 'Coinciden con tu búsqueda y no tienen fecha de compra' : 'Pendientes de recibir sin fecha de compra'}</b> <span>${sinFecha.length} · arrástralas al mes en que las pediste (se les pone el último día de ese mes)</span></div><div class="sinfl">${sinFecha.map(fcard).join('')}</div></div>` : ''}
+    ${otrosTxt ? `<div class="otrosy">También coinciden en otros años: ${otrosTxt}</div>` : ''}
     <div class="ymes sinmes" data-mes="${pedYear}"><div class="sinfh"><b>${pedYear} · sin mes concreto</b> <span>${soloAnyoF.length + soloAnyoP.length ? 'arrástralas a su mes cuando lo sepas' : 'suelta aquí lo que solo sabes que es de este año'}</span></div><div class="sinfl">${soloAnyoF.map(fcard).join('')}${soloAnyoP.map(pcard).join('')}</div></div>
     <div class="ygrid">${cols}</div>`;
   $('btnPaq').onclick = () => openPaq(null);
+  el.querySelectorAll('.otroy').forEach(b => b.onclick = () => { pedYear = b.dataset.year; renderPedidos(); });
   $('qcount').textContent = tokens.length ? `filtrando ${pedYear}` : '';
   $('searchWrap').classList.toggle('has', !!$('q').value.trim());
 }
