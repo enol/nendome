@@ -1013,12 +1013,16 @@ function updateSel() {
 
 /* ===================== BÚSQUEDA ===================== */
 function parseTags(s) { return [...new Set(String(s).split(/[,#]+/).map(t => t.trim().toLowerCase()).filter(Boolean))]; }
+// texto «aplanado» para buscar: sin acentos ni signos, sin letras dobles y ou→o (Yuugi = Yugi, Toudou = Todo, Kotarou = Kotaro)
+const aplanar = s => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, ' ').replace(/([a-z])\1+/g, '$1').replace(/ou/g, 'o').trim();
 function matches(f, tokens) {
   const num = (f.numero || '').toLowerCase(), name = (f.nombre || '').toLowerCase(), serie = (f.serie || '').toLowerCase();
+  const plano = aplanar(name + ' ' + serie + ' ' + (f.tags || []).join(' '));
   return tokens.every(t => {
     if (t.startsWith('#')) { const tg = t.slice(1); return !tg || f.tags.some(x => x.startsWith(tg)); }
     if (/^\d/.test(t)) return num === t || num.startsWith(t + '-') || name.includes(t);
-    return name.includes(t) || serie.includes(t) || num.includes(t) || f.tags.some(x => x.includes(t));
+    if (name.includes(t) || serie.includes(t) || num.includes(t) || f.tags.some(x => x.includes(t))) return true;
+    const tp = aplanar(t); return !!tp && tp.split(' ').every(p => plano.includes(p));
   });
 }
 let hits = [];
@@ -1611,6 +1615,9 @@ const eurOficial = f => f.precioJPY && f.lanzamiento ? Math.round(f.precioJPY / 
 
 /* ===================== AYUDAS DE GRÁFICAS ===================== */
 const C1 = '#2a78d6', C2 = '#eb6834', C3 = '#1baf7a';
+// tonos alegres para el resto de gráficas
+const VIVO = { cielo: '#4fc3f7', rosa: '#ff5f9e', naranja: '#ff8a5b', amarillo: '#ffc23d', lima: '#b7e03a', azul: '#3b8cff', magenta: '#e0389a' };
+const colorGenero = g => /chico|hombre|masc|boy|male\b/i.test(g) ? VIVO.azul : /chica|mujer|fem|girl|female/i.test(g) ? VIVO.magenta : VIVO.naranja;
 const eur = v => v == null ? '—' : (Math.round(v * 100) / 100).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
 const eur0 = v => Math.round(v).toLocaleString('es-ES') + ' €';
 const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
@@ -1753,7 +1760,7 @@ function hbars(data, series, fmt) {
     d.vals.forEach((v, j) => {
       const w = (Wd - L - R) * v / max; if (w <= 0.5) return;
       const last = d.vals.slice(j + 1).every(z => !z);
-      segs += last && w > 5 ? `<path class="bar" fill="${series[j].c}" d="M${x0},${y + 4} h${w - 4} q4,0 4,4 v${row - 16} q0,4 -4,4 h${-(w - 4)} z"/>` : `<rect class="bar" x="${x0}" y="${y + 4}" width="${Math.max(1, w - 2)}" height="${row - 8}" fill="${series[j].c}"/>`;
+      segs += last && w > 5 ? `<path class="bar" fill="${(j === 0 && d.c) || series[j].c}" d="M${x0},${y + 4} h${w - 4} q4,0 4,4 v${row - 16} q0,4 -4,4 h${-(w - 4)} z"/>` : `<rect class="bar" x="${x0}" y="${y + 4}" width="${Math.max(1, w - 2)}" height="${row - 8}" fill="${(j === 0 && d.c) || series[j].c}"/>`;
       x0 += w;
     });
     g += `<g data-tip="${esc(d.tip)}"><rect class="hit" x="0" y="${y}" width="${Wd}" height="${row}"/><text x="${L - 8}" y="${y + row / 2 + 4}" text-anchor="end">${esc(d.label.length > 24 ? d.label.slice(0, 23) + '…' : d.label)}</text>${segs}<text x="${x0 + 6}" y="${y + row / 2 + 4}">${esc(d.right ?? fmt(d.vals.reduce((a, b) => a + b, 0)))}</text></g>`;
@@ -1805,7 +1812,7 @@ function renderDatos() {
   const cond = grp(conCoste, f => ({ nueva: 'Nueva', segunda: 'Segunda mano' }[f.condicion]));
   const porCond = Object.entries(cond).map(([k, a]) => ({ label: k, vals: [sumK(a, 'total') / a.length], right: `${eur(sumK(a, 'total') / a.length)} · ${a.length}`, tip: `<b>${k}</b><div class="r"><span>Figuras</span>${a.length}</div><div class="r"><span>Coste medio</span>${eur(sumK(a, 'total') / a.length)}</div>` }));
   const gen = grp(set, f => ({ chica: '♀ Chica', chico: '♂ Chico', otro: '⚧ Otro' }[f.genero]));
-  const porGen = Object.entries(gen).sort((a, b) => b[1].length - a[1].length).map(([k, a]) => ({ label: k, vals: [a.length], right: `${a.length} (${Math.round(a.length / set.length * 100)} %)`, tip: `<b>${k}</b><div class="r"><span>Figuras</span>${a.length}</div>` }));
+  const porGen = Object.entries(gen).sort((a, b) => b[1].length - a[1].length).map(([k, a]) => ({ label: k, vals: [a.length], c: colorGenero(k), right: `${a.length} (${Math.round(a.length / set.length * 100)} %)`, tip: `<b>${k}</b><div class="r"><span>Figuras</span>${a.length}</div>` }));
   const ser = grp(set, f => franquicia(f.serie));
   const porSerie = Object.entries(ser).filter(([k]) => k !== 'Sin serie').sort((a, b) => b[1].length - a[1].length).slice(0, 15).map(([k, a]) => { const vs = grp(a, f => f.serie || '—'), vk = Object.keys(vs);
     return { label: k, vals: [a.length], right: String(a.length), tip: `<b>${esc(k)}</b><div class="r"><span>Figuras</span>${a.length}</div>` + (vk.length > 1 ? `<div class="sub">${vk.sort((x, y) => vs[y].length - vs[x].length).slice(0, 8).map(v => `${esc(v)} (${vs[v].length})`).join('<br>')}${vk.length > 8 ? '<br>…' : ''}</div>` : '') }; });
@@ -1842,12 +1849,11 @@ function renderDatos() {
     <div class="grid2">
       ${card('Gasto por año de llegada', 'Según cuándo llegaron y pagaste el VAT/aduana · pulsa + bajo un año para verlo mes a mes', years.length ? legend(S3) + vbars(porAnyo, S3, eur0, { plus: true }) + table(['Año', 'Figuras', 'Figura', 'Envío', 'IVA/aduana', 'Total'], years.map(y => [y, ys[y].length, eur0(sumK(ys[y], 'pagado')), eur0(sumK(ys[y], 'envio')), eur0(sumK(ys[y], 'aduanas')), eur0(sumK(ys[y], 'total'))])) : vacio('Todavía no hay figuras con fecha de llegada.'))}
       ${card('Coste medio por figura', 'Total medio pagado por cada Nendoroid, por año de llegada', years.length ? vbars(medio, [{ c: C1 }], eur0) : vacio('Aparecerá cuando haya fechas de llegada.'))}
-      ${card('Gasto por tienda', 'Total gastado · número de figuras', porTienda.length ? hbars(porTienda, [{ c: C1 }], eur0) : vacio('Sin datos.'))}
-      ${card('Envío + aduanas por figura, según tienda', 'Media por figura · tiendas con 3 o más compras', extraTienda.length ? legend(S3.slice(1)) + hbars(extraTienda, S3.slice(1), eur) : vacio('Sin datos.'))}
-      ${card('Precio oficial medio en euros', 'Precio de salida en Japón (sin impuestos), al cambio medio del BCE del mes de lanzamiento', porOf.length ? vbars(porOf, [{ c: C1 }], eur0) : vacio('Sin datos.'))}
-      ${card('Series con más figuras', 'Top 15 de esta vista · temporadas, películas y variantes del nombre van juntas', porSerie.length ? hbars(porSerie, [{ c: C1 }], String) : vacio('Sin datos.'))}
-      ${card('Nueva o de segunda mano', 'Coste medio por figura · número de figuras', porCond.length ? hbars(porCond, [{ c: C1 }], eur) : vacio('Sin datos.'))}
-      ${card('Por género', 'Figuras de esta vista', porGen.length ? hbars(porGen, [{ c: C1 }], String) : vacio('Sin datos.'))}
+      ${card('Gasto por tienda', 'Total gastado · número de figuras', porTienda.length ? hbars(porTienda, [{ c: VIVO.cielo }], eur0) : vacio('Sin datos.'))}
+      ${card('Envío + aduanas por figura, según tienda', 'Media por figura · tiendas con 3 o más compras', extraTienda.length ? legend([{ c: VIVO.rosa, n: S3[1].n }, { c: VIVO.amarillo, n: S3[2].n }]) + hbars(extraTienda, [{ c: VIVO.rosa, n: S3[1].n }, { c: VIVO.amarillo, n: S3[2].n }], eur) : vacio('Sin datos.'))}
+      ${card('Series con más figuras', 'Top 15 de esta vista · temporadas, películas y variantes del nombre van juntas', porSerie.length ? hbars(porSerie, [{ c: VIVO.rosa }], String) : vacio('Sin datos.'))}
+      ${card('Nueva o de segunda mano', 'Coste medio por figura · número de figuras', porCond.length ? hbars(porCond, [{ c: VIVO.naranja }], eur) : vacio('Sin datos.'))}
+      ${card('Por género', 'Figuras de esta vista', porGen.length ? hbars(porGen, [{ c: VIVO.naranja }], String) : vacio('Sin datos.'))}
     </div>`;
   document.querySelectorAll('#dScope button').forEach(b => b.onclick = () => { dScope = b.dataset.s; renderDatos(); });
 }
