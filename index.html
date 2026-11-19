@@ -351,7 +351,7 @@ details.tbl td:first-child,details.tbl th:first-child{text-align:left}
 .ysep{border-top:1.5px solid #3b3330;margin:10px 0}
 .ypaqs:empty{display:none}
 .ypaqs:not(:empty)+.ytot{border-top:1.5px solid #3b3330;margin-top:10px}
-.ytot{font-size:12px;padding-top:8px;margin-top:auto}
+.ytot{font-size:12px;padding-top:8px;margin-top:14px}
 .ytot .r{display:flex;justify-content:space-between;padding:1px 0;color:#52514e}
 .ytot .tot{border-top:1px solid var(--line);margin-top:3px;padding-top:4px;color:var(--ink)}
 .fcd{display:flex;gap:8px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:6px;cursor:grab;touch-action:none}
@@ -1769,6 +1769,13 @@ const S3 = [{ n: 'Figura', c: C1 }, { n: 'Envío', c: C2 }, { n: 'IVA/aduana', c
 const desglose = (titulo, a) => `<b>${titulo}</b> · ${a.length} figuras<div class="r"><span><i style="background:${C1}"></i>Figura</span>${eur0(sumK(a, 'pagado'))}</div><div class="r"><span><i style="background:${C2}"></i>Envío</span>${eur0(sumK(a, 'envio'))}</div><div class="r"><span><i style="background:${C3}"></i>IVA/aduana</span>${eur0(sumK(a, 'aduanas'))}</div><div class="r"><b>Total</b><b>${eur0(sumK(a, 'total'))}</b></div>`;
 function scopeSet() { const est = SCOPES[dScope][1]; return Object.values(S.figs).filter(f => est.includes(f.estado)); }
 
+function verFueraGraf() {
+  const fs = (window._fueraGraf || []).slice().sort((a, b) => (a.fechaLlegada || '').localeCompare(b.fechaLlegada || '') || cmpFig(a, b));
+  const motivo = f => [!SCOPES[dScope][1].includes(f.estado) ? `estado «${ESTADOS[f.estado] || 'Sin marca'}»` : '', f.total == null ? 'sin coste' : ''].filter(Boolean).join(' · ');
+  openPop(`<div class="pophead"><h2>Fuera de las gráficas por año</h2><span class="note">${fs.length} figuras</span><span class="spacer"></span><button class="btn" onclick="closePop()">Cerrar</button></div>
+    <div class="duplist" style="max-height:62vh">${fs.map(f => `<div class="lrow" data-uid="${f.uid}" style="cursor:pointer">${imgSrc(f) ? `<img src="${esc(imgSrc(f))}" referrerpolicy="no-referrer">` : '<span class="lph">?</span>'}<span class="ln">${esc(f.numero || '—')}</span><div class="lt"><b>${esc(f.nombre || '')}</b><small>Llegada ${esc(fmtFecha(f.fechaLlegada))} · <span style="color:#d6453a">${esc(motivo(f))}</span></small></div>${stIcon(f)}</div>`).join('')}</div>`);
+  $('pop').querySelectorAll('.lrow').forEach(r => r.onclick = () => { closePop(); openModal(r.dataset.uid); });
+}
 function renderDatos() {
   const set = scopeSet();
   const conCoste = set.filter(f => f.total != null);
@@ -1801,7 +1808,11 @@ function renderDatos() {
 
   const kpi = (l, v, d) => `<div class="kpi"><div class="l">${l}</div><div class="v">${v}</div><div class="d">${d || ''}</div></div>`;
   const pct = v => gTotal ? `${(v / gTotal * 100).toFixed(1).replace('.', ',')} % del gasto` : '';
-  const sinFechaMsg = sinFecha ? `<div class="aviso">${sinFecha} de ${conCoste.length} figuras aún no tienen <b>fecha de llegada</b> y no salen en las gráficas por año. Rellénala en su ficha o en su paquete.</div>` : '';
+  // figuras con fecha de llegada que se quedan fuera de las gráficas por año (sin coste o con un estado fuera de este ámbito)
+  const fuera = Object.values(S.figs).filter(f => f.fechaLlegada && !(set.includes(f) && f.total != null));
+  window._fueraGraf = fuera;
+  const fueraMsg = fuera.length ? `<div class="aviso">${fuera.length} ${fuera.length === 1 ? 'figura tiene' : 'figuras tienen'} fecha de llegada pero no ${fuera.length === 1 ? 'sale' : 'salen'} en las gráficas por año (no tienen coste o su estado no entra en «${SCOPES[dScope][0]}»). <button class="btn" style="margin-left:6px;padding:4px 12px;font-size:12px" onclick="verFueraGraf()">Ver cuáles</button></div>` : '';
+  const sinFechaMsg = fueraMsg + (sinFecha ? `<div class="aviso">${sinFecha} de ${conCoste.length} figuras aún no tienen <b>fecha de llegada</b> y no salen en las gráficas por año. Rellénala en su ficha o en su paquete.</div>` : '');
   $('dwrap').innerHTML = `
     <div class="dhead"><h2>Estadísticas</h2>
       <div class="seg" id="dScope">${Object.entries(SCOPES).map(([k, [n]]) => `<button data-s="${k}" class="${dScope === k ? 'on' : ''}">${n}</button>`).join('')}</div>
