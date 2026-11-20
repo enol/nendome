@@ -785,6 +785,8 @@ const XLPICS = {"52":"/9j/4AAQSkZJRgABAQEAYABgAAD/2wCEAAIBAQEBAQIBAQECAgICAgQDAg
 const GS_BASE = 'https://www.goodsmile.com/gsc-webrevo-sdk-storage-prd/product/image/';
 const gsImg = (id, file) => file ? GS_BASE + file : '';
 const CAT_BY_ID = Object.fromEntries(CATALOGO.map(r => [String(r[0]), r]));
+const CAT_BY_NUM = {}; CATALOGO.forEach(r => { if (r[1] && !CAT_BY_NUM[String(r[1]).toLowerCase()]) CAT_BY_NUM[String(r[1]).toLowerCase()] = r; });
+const catDe = f => (f.gsId && CAT_BY_ID[String(f.gsId)]) || (/^\d/.test(f.numero || '') && CAT_BY_NUM[String(f.numero).toLowerCase()]) || null;
 
 /* ===================== ESTADO ===================== */
 const KEY = 'nendoboard-v1';
@@ -1030,7 +1032,7 @@ function parseTags(s) { return [...new Set(String(s).split(/[,#]+/).map(t => t.t
 const aplanar = s => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, ' ').replace(/([a-z])\1+/g, '$1').replace(/ou/g, 'o').trim();
 function matches(f, tokens) {
   const num = (f.numero || '').toLowerCase(), name = (f.nombre || '').toLowerCase(), serie = (f.serie || '').toLowerCase();
-  const plano = aplanar(name + ' ' + serie + ' ' + (f.tags || []).join(' '));
+  const cr = catDe(f), plano = aplanar(name + ' ' + serie + ' ' + (f.tags || []).join(' ') + (cr ? ' ' + cr[2] + ' ' + (cr[4] || '') : ''));
   return tokens.every(t => {
     if (t.startsWith('#')) { const tg = t.slice(1); return !tg || f.tags.some(x => x.startsWith(tg)); }
     if (/^\d/.test(t)) return num === t || num.startsWith(t + '-') || name.includes(t);
@@ -1630,7 +1632,7 @@ const eurOficial = f => f.precioJPY && f.lanzamiento ? Math.round(f.precioJPY / 
 const C1 = '#2a78d6', C2 = '#eb6834', C3 = '#1baf7a';
 // tonos alegres para el resto de gráficas
 const VIVO = { cielo: '#4fc3f7', rosa: '#ff5f9e', naranja: '#ff8a5b', amarillo: '#ffc23d', lima: '#b7e03a', azul: '#3b8cff', magenta: '#e0389a' };
-const colorGenero = g => /chico|hombre|masc|boy|male\b/i.test(g) ? VIVO.azul : /chica|mujer|fem|girl|female/i.test(g) ? VIVO.magenta : VIVO.naranja;
+const colorGenero = g => /chico|hombre|masc|boy|male\b/i.test(g) ? '#7aa7e6' : /chica|mujer|fem|girl|female/i.test(g) ? '#df8cc0' : '#f5b38a';
 const eur = v => v == null ? '—' : (Math.round(v * 100) / 100).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
 const eur0 = v => Math.round(v).toLocaleString('es-ES') + ' €';
 const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
@@ -1786,17 +1788,17 @@ function pie(data) {
   const R0 = 100, cx = 110, cy = 110; let a0 = -Math.PI / 2, g = '';
   data.forEach(d => {
     const frac = d.v / tot, a1 = a0 + frac * Math.PI * 2;
-    const path = frac >= 0.9999 ? `<circle cx="${cx}" cy="${cy}" r="${R0}" fill="${d.c}" stroke="#fff" stroke-width="2"/>`
-      : `<path d="M${cx},${cy} L${(cx + R0 * Math.cos(a0)).toFixed(2)},${(cy + R0 * Math.sin(a0)).toFixed(2)} A${R0},${R0} 0 ${frac > 0.5 ? 1 : 0} 1 ${(cx + R0 * Math.cos(a1)).toFixed(2)},${(cy + R0 * Math.sin(a1)).toFixed(2)} Z" fill="${d.c}" stroke="#fff" stroke-width="2" stroke-linejoin="round"/>`;
+    const path = frac >= 0.9999 ? `<circle cx="${cx}" cy="${cy}" r="${R0}" fill="${d.c}"/>`
+      : `<path d="M${cx},${cy} L${(cx + R0 * Math.cos(a0)).toFixed(2)},${(cy + R0 * Math.sin(a0)).toFixed(2)} A${R0},${R0} 0 ${frac > 0.5 ? 1 : 0} 1 ${(cx + R0 * Math.cos(a1)).toFixed(2)},${(cy + R0 * Math.sin(a1)).toFixed(2)} Z" fill="${d.c}"/>`;
     g += `<g class="slice" data-tip="${esc(d.tip || '')}">${path}</g>`; a0 = a1;
   });
   const ley = data.map(d => `<div class="pl" data-tip="${esc(d.tip || '')}"><i style="background:${d.c}"></i><span class="pn">${esc(d.label)}</span><span class="pv">${esc(d.right ?? '')}</span><span class="pp">${(d.v / tot * 100).toFixed(d.v / tot < 0.1 ? 1 : 0).replace('.', ',')} %</span></div>`).join('');
   return `<div class="piewrap"><svg viewBox="0 0 220 220" class="piesvg">${g}</svg><div class="pleg">${ley}</div></div>`;
 }
 // colores fijos por tienda (Mandarake en azules, juntas)
-const AZULES = ['#1565c0', '#2f86e6', '#5aa5f5', '#8cc3fa', '#0d47a1', '#b9dbfc'];
-const OTROS_COL = ['#ff5f9e', '#b7e03a', '#ab47bc', '#26c6da', '#ff8a65', '#8d6e63', '#f06292', '#7cb342', '#ffb74d', '#5c6bc0', '#d4a017', '#ec407a', '#4db6ac', '#ba68c8'];
-const TIENDA_COL = [[/hobby\s*genki/i, '#e53935'], [/good\s*smile/i, '#ff8a1f'], [/ami\s*ami/i, '#ffc93c'], [/mega\s*otaku/i, '#5900b1'], [/global\s*freaks/i, '#9e9e9e'], [/wallapop/i, '#00b188'], [/blue\s*star/i, '#0012b1']];
+const AZULES = ['#6f9fd8', '#8db6e6', '#a9c9ee', '#5687c4'];
+const OTROS_COL = ['#f2a7c3', '#c9dd8c', '#c3a6dc', '#9fd7df', '#f5b99a', '#c2aa9a', '#e8b6d4', '#a9c98f', '#f3cf96', '#a6aedc', '#dcc58a', '#99cfc4'];
+const TIENDA_COL = [[/mandarake/i, '#6f9fd8'], [/hobby\s*genki/i, '#e57373'], [/good\s*smile/i, '#f6a96b'], [/ami\s*ami/i, '#f5d16e'], [/mega\s*otaku/i, '#9b72c9'], [/global\s*freaks/i, '#b5b0aa'], [/wallapop/i, '#6cc7b0'], [/blue\s*star/i, '#6b7bd1']];
 function coloresTiendas(nombres) {
   const out = {}; let az = 0, ot = 0;
   nombres.forEach(n => { if (/mandarake/i.test(n)) out[n] = AZULES[az++ % AZULES.length]; else { const m = TIENDA_COL.find(([re]) => re.test(n)); out[n] = m ? m[1] : OTROS_COL[ot++ % OTROS_COL.length]; } });
@@ -1808,8 +1810,8 @@ function juntarMandarake(lista) {
   const i = lista.findIndex(([t]) => /mandarake/i.test(t)), resto = lista.filter(([t]) => !/mandarake/i.test(t));
   resto.splice(Math.min(i, resto.length), 0, ...md); return resto;
 }
-const SERIE_COL = [[/vocaloid/i, '#1fb5a5'], [/haikyu/i, '#ff8a1f'], [/jojo/i, '#8e44ad'], [/jujutsu/i, '#e53935'], [/kimetsu/i, '#ffc93c'], [/card\s*captor/i, '#f8b4d0'], [/kirby/i, '#e0389a']];
-const SERIE_OTROS = ['#4fc3f7', '#b7e03a', '#ff8a65', '#5c6bc0', '#8d6e63', '#26c6da', '#d4a017', '#7cb342', '#ba68c8', '#2f86e6', '#f06292', '#4db6ac', '#ffb74d', '#9e9d24'];
+const SERIE_COL = [[/vocaloid/i, '#6cc3b8'], [/haikyu/i, '#f6a96b'], [/jojo/i, '#a98bd0'], [/jujutsu/i, '#e57373'], [/kimetsu/i, '#f5d16e'], [/card\s*captor/i, '#f6c6d8'], [/kirby/i, '#e48bbd']];
+const SERIE_OTROS = ['#8ec5ea', '#c9dd8c', '#f5b99a', '#a6aedc', '#c2aa9a', '#9fd7df', '#dcc58a', '#a9c98f', '#c3a6dc', '#f2a7c3', '#99cfc4', '#e3c1a0'];
 const legend = s => s.length > 1 ? `<div class="legend">${s.map(x => `<span><i style="background:${x.c}"></i>${x.n}</span>`).join('')}</div>` : '';
 const table = (head, rows) => `<details class="tbl"><summary>Ver tabla</summary><table><tr>${head.map(h => `<th>${h}</th>`).join('')}</tr>${rows.map(r => `<tr>${r.map(c => `<td>${c}</td>`).join('')}</tr>`).join('')}</table></details>`;
 const card = (title, sub, body) => `<div class="card"><h3>${title}</h3><div class="sub">${sub}</div><div class="chart">${body}</div></div>`;
@@ -1846,15 +1848,16 @@ function renderDatos() {
   const porAnyo = years.map(y => ({ label: y, plus: y, vals: [sumK(ys[y], 'pagado'), sumK(ys[y], 'envio'), sumK(ys[y], 'aduanas')], tip: desglose(y, ys[y]) }));
   const medio = years.map(y => { const a = ys[y], m = sumK(a, 'total') / a.length; return { label: y, vals: [m], tip: `<b>${y}</b><div class="r"><span>Coste medio</span>${eur(m)}</div><div class="r"><span>Figuras</span>${a.length}</div>` }; });
 
-  const ts = grp(conCoste, f => f.tienda || 'Sin tienda');
+  const ts = grp(conCoste, f => /mandarake/i.test(f.tienda || '') ? 'Mandarake' : (f.tienda || 'Sin tienda'));
+  const subMd = grp(conCoste.filter(f => /mandarake/i.test(f.tienda || '')), f => f.tienda);
   const tiendas = juntarMandarake(Object.entries(ts).sort((a, b) => sumK(b[1], 'total') - sumK(a[1], 'total')));
   const colT = coloresTiendas(tiendas.map(([t]) => t));
-  const porTienda = tiendas.map(([t, a]) => ({ label: t, v: sumK(a, 'total'), c: colT[t], vals: [sumK(a, 'total')], right: `${eur0(sumK(a, 'total'))} · ${a.length}`, tip: `<b>${esc(t)}</b><div class="r"><span>Gastado</span>${eur(sumK(a, 'total'))}</div><div class="r"><span>Figuras</span>${a.length}</div><div class="r"><span>Media</span>${eur(sumK(a, 'total') / a.length)}</div>` }));
-  const extraTienda = tiendas.map(([t, a]) => { const e = sumK(a, 'envio'), d = sumK(a, 'aduanas');
-    return { label: t, v: e + d, c: colT[t], right: eur0(e + d), tip: `<b>${esc(t)}</b><div class="r"><span>Envío</span>${eur(e)}</div><div class="r"><span>IVA/aduana</span>${eur(d)}</div><div class="r"><span>Media por figura</span>${eur((e + d) / a.length)}</div><div class="r"><span>Figuras</span>${a.length}</div>` }; }).filter(x => x.v > 0);
+  const porTienda = tiendas.map(([t, a]) => ({ label: t, v: sumK(a, 'total'), c: colT[t], vals: [sumK(a, 'total')], right: `${eur0(sumK(a, 'total'))} · ${a.length}`, tip: `<b>${esc(t)}</b><div class="r"><span>Gastado</span>${eur(sumK(a, 'total'))}</div><div class="r"><span>Figuras</span>${a.length}</div><div class="r"><span>Media</span>${eur(sumK(a, 'total') / a.length)}</div>${t === 'Mandarake' && Object.keys(subMd).length > 1 ? Object.entries(subMd).map(([n, x]) => `<div class="r"><span>· ${esc(n)}</span>${eur0(sumK(x, 'total'))}</div>`).join('') : ''}` }));
+  const extraTienda = tiendas.filter(([, a]) => a.length >= 3).map(([t, a]) => { const e = sumK(a, 'envio') / a.length, d = sumK(a, 'aduanas') / a.length;
+    return { label: t, vals: [e, d], right: eur(e + d), tip: `<b>${esc(t)}</b> · media por figura<div class="r"><span><i style="background:${VIVO.rosa}"></i>Envío</span>${eur(e)}</div><div class="r"><span><i style="background:${VIVO.amarillo}"></i>IVA/aduana</span>${eur(d)}</div>` }; }).sort((a, b) => (b.vals[0] + b.vals[1]) - (a.vals[0] + a.vals[1]));
 
   const cond = grp(conCoste, f => ({ nueva: 'Nueva', segunda: 'Segunda mano' }[f.condicion]));
-  const porCond = Object.entries(cond).map(([k, a]) => ({ label: k, v: a.length, c: k === 'Nueva' ? '#8fd3ff' : '#ffc49a', vals: [sumK(a, 'total') / a.length], right: `${a.length} · media ${eur0(sumK(a, 'total') / a.length)}`, tip: `<b>${k}</b><div class="r"><span>Figuras</span>${a.length}</div><div class="r"><span>Coste medio</span>${eur(sumK(a, 'total') / a.length)}</div>` }));
+  const porCond = Object.entries(cond).map(([k, a]) => ({ label: k, v: a.length, c: k === 'Nueva' ? '#a9d8f5' : '#f8c9a4', vals: [sumK(a, 'total') / a.length], right: `${a.length} · media ${eur0(sumK(a, 'total') / a.length)}`, tip: `<b>${k}</b><div class="r"><span>Figuras</span>${a.length}</div><div class="r"><span>Coste medio</span>${eur(sumK(a, 'total') / a.length)}</div>` }));
   const gen = grp(set, f => ({ chica: '♀ Chica', chico: '♂ Chico', otro: '⚧ Otro' }[f.genero]));
   const porGen = Object.entries(gen).sort((a, b) => b[1].length - a[1].length).map(([k, a]) => ({ label: k, v: a.length, vals: [a.length], c: colorGenero(k), right: String(a.length), tip: `<b>${k}</b><div class="r"><span>Figuras</span>${a.length}</div>` }));
   const ser = grp(set, f => franquicia(f.serie));
@@ -1897,7 +1900,7 @@ function renderDatos() {
       ${card('Gasto por año de llegada', 'Según cuándo llegaron y pagaste el VAT/aduana · pulsa + bajo un año para verlo mes a mes', years.length ? legend(S3) + vbars(porAnyo, S3, eur0, { plus: true }) + table(['Año', 'Figuras', 'Figura', 'Envío', 'IVA/aduana', 'Total'], years.map(y => [y, ys[y].length, eur0(sumK(ys[y], 'pagado')), eur0(sumK(ys[y], 'envio')), eur0(sumK(ys[y], 'aduanas')), eur0(sumK(ys[y], 'total'))])) : vacio('Todavía no hay figuras con fecha de llegada.'))}
       ${card('Coste medio por figura', 'Total medio pagado por cada Nendoroid, por año de llegada', years.length ? vbars(medio, [{ c: C1 }], eur0) : vacio('Aparecerá cuando haya fechas de llegada.'))}
       ${card('Gasto por tienda', 'Total gastado · número de figuras', porTienda.length ? pie(porTienda) : vacio('Sin datos.'))}
-      ${card('Envío + aduanas por tienda', 'Lo pagado en envíos e IVA/aduanas en cada tienda · la media por figura, al pasar el ratón', extraTienda.length ? pie(extraTienda) : vacio('Sin datos.'))}
+      ${card('Envío + aduanas por figura, según tienda', 'Media por figura · tiendas con 3 o más compras', extraTienda.length ? legend([{ c: VIVO.rosa, n: 'Envío' }, { c: VIVO.amarillo, n: 'IVA/aduana' }]) + hbars(extraTienda, [{ c: VIVO.rosa }, { c: VIVO.amarillo }], eur) : vacio('Sin datos.'))}
       ${card('Series con más figuras', 'Las 12 con más figuras de esta vista · temporadas, películas y variantes del nombre van juntas', porSerie.length ? pie(porSerie) : vacio('Sin datos.'))}
       ${card('Nueva o de segunda mano', 'Número de figuras · coste medio de cada una', porCond.length ? pie(porCond) : vacio('Sin datos.'))}
       ${card('Por género', 'Figuras de esta vista', porGen.length ? pie(porGen) : vacio('Sin datos.'))}
