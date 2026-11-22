@@ -602,6 +602,28 @@ input[readonly]{cursor:default!important}
 .pl .pn{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pl .pv{color:var(--muted);font-size:12px;text-align:right}
 .pl .pp{font-weight:700;text-align:right}
+
+/* paquetes: ticket del mes de envío, vista y ventana más alta */
+.pticket{display:flex;align-items:center;gap:8px;background:#F0B071;border-radius:10px;padding:8px 10px;cursor:pointer;color:#3b2a1a;margin-bottom:8px}
+.pticket:hover{filter:brightness(1.04);box-shadow:0 3px 10px rgba(240,176,113,.5)}
+.pticket>div{flex:1;min-width:0;line-height:1.25}
+.pticket b{display:block;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pticket small{font-size:11px;opacity:.85}
+.pticket .ptv{text-align:right;font-weight:700;font-size:13px;line-height:1.1}
+.pticket .ptv small{display:block;font-weight:400}
+.pticket .pkst{color:#fff;flex:none}
+.vistaped{display:flex;align-items:center;gap:4px;margin-right:12px;font-size:13px;color:var(--muted)}
+.vistaped button{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:6px 12px;font:inherit;font-size:13px;color:var(--muted);cursor:pointer}
+.vistaped button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.ygrid.sinfigs .yfigs,.ygrid.sinfigs .ysep{display:none}
+.ygrid.sinpaqs .ypaqs{display:none}
+#popBg .modal.pop{max-height:94vh}
+.qres{max-height:46vh!important}
+#popBg .modal.pop:has(#qFigs){min-height:86vh;display:flex;flex-direction:column}
+#popBg .modal.pop:has(#qFigs) .modal-foot{margin-top:auto}
+#qFigs .qf[data-u]{cursor:pointer}
+#qFigs .qf[data-u]:hover{background:var(--bg)}
+#modalBg.sobrepop{z-index:80}
 </style>
 </head>
 <body>
@@ -1311,7 +1333,7 @@ function openModal(uid) {
   $('modalBg').classList.add('on');
   setTimeout(() => (f ? $('fName') : $('catQ')).focus(), 30);
 }
-function closeModal() { $('modalBg').classList.remove('on'); editing = null; }
+function closeModal() { $('modalBg').classList.remove('on', 'sobrepop'); editing = null; }
 function drawImg() {
   const box = $('imgBox');
   box.querySelector('img')?.remove();
@@ -1333,7 +1355,7 @@ function fillCompra(f) {
   $('dlVDonde').innerHTML = [...new Set(Object.values(S.figs).map(g => g.ventaDonde).filter(Boolean))].map(v => `<option value="${esc(v)}">`).join('');
   verVenta();
   $('fEnvF').value = f.fechaEnvio || ''; $('fLlegF').value = f.fechaLlegada || '';
-  $('fPaq').innerHTML = '<option value="">— sin paquete —</option>' + Object.values(S.paquetes || {}).sort((a, b) => (b.mes || '').localeCompare(a.mes || '')).map(p => `<option value="${p.id}">${esc(paqNombre(p))}</option>`).join('');
+  $('fPaq').innerHTML = '<option value="">— sin paquete —</option>' + Object.values(S.paquetes || {}).sort((a, b) => colPaq(b).localeCompare(colPaq(a))).map(p => `<option value="${p.id}">${esc(paqNombre(p))}</option>`).join('');
   $('fPaq').value = f.paquete || '';
   fechasDePaquete();
   $('tiendas').innerHTML = [...new Set(Object.values(S.figs).map(x => x.tienda).filter(Boolean))].sort().map(t => `<option value="${esc(t)}">`).join('');
@@ -2031,7 +2053,15 @@ $('pPrecio').addEventListener('click', e => { const r = e.target.closest('.prow'
 
 /* ===================== PEDIDOS: VISTA ANUAL POR MESES ===================== */
 const PQE = { preparando: ['📦', 'Preparando', '#8a8f98'], enviado: ['✈', 'Enviado', '#2a78d6'], aduana: ['🛃', 'En aduana', '#d98a00'], entregado: ['✓', 'Ha llegado', '#39b54a'] };
-const paqNombre = p => `${p.tracking || 'Sin tracking'} · ${mesNombre(p.mes)}`;
+// columna del paquete: el mes de llegada; si aún no ha llegado, el de envío; si no tiene fechas, el mes en que se creó
+const mesDeFecha = d => /^\d{4}-\d{2}/.test(d || '') ? d.slice(0, 7) : '';
+const colPaq = p => mesDeFecha(p.fechaLlegada) || mesDeFecha(p.fechaEnvio) || normMes(p.mes);
+const mesEnvioPaq = p => mesDeFecha(p.fechaEnvio) || colPaq(p);       // ahí cuenta el gasto de envío
+const mesAduanaPaq = p => colPaq(p);                                  // y la aduana, en el de llegada
+const ticketPaq = p => mesDeFecha(p.fechaLlegada) && mesDeFecha(p.fechaEnvio) && mesDeFecha(p.fechaLlegada) !== mesDeFecha(p.fechaEnvio);
+const envioDePaq = p => p.envio != null ? +p.envio : figsDe(p.id).reduce((a, f) => a + (+f.envio || 0), 0);
+const aduanaDePaq = p => p.aduana != null ? +p.aduana : figsDe(p.id).reduce((a, f) => a + (+f.aduanas || 0), 0);
+const paqNombre = p => `${p.tracking || 'Sin tracking'} · ${mesNombre(colPaq(p))}`;
 const figsDe = id => Object.values(S.figs).filter(f => f.paquete === id).sort(cmpFig);
 const hoyISO = () => { const d = new Date(); return new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); };
 const hoyMes = () => hoyISO().slice(0, 7);
@@ -2066,6 +2096,8 @@ function moverAMes(fecha, ym) {
   return `${ym}-${String(Math.min(d || 1, last)).padStart(2, '0')}`;
 }
 
+let verPed = { figs: true, paqs: true };
+try { Object.assign(verPed, JSON.parse(localStorage.getItem(KEY + '-verped')) || {}); } catch (e) {}
 function renderPedidos() {
   tipHide();
   const el = $('pPedidos');
@@ -2076,12 +2108,12 @@ function renderPedidos() {
   const cur = String(new Date().getFullYear());
   const years = new Set([cur]);
   all.forEach(f => { if (f.compra) years.add(f.compra.slice(0, 4)); });
-  paqs.forEach(p => { if (p.mes) years.add(p.mes.slice(0, 4)); });
+  paqs.forEach(p => { [colPaq(p), mesEnvioPaq(p)].forEach(m => { if (m) years.add(m.slice(0, 4)); }); });
   const ylist = [...years].sort().reverse();
   if (!years.has(pedYear)) pedYear = cur;
   const okF = f => matches(f, tokens) && pass(f);
   const okP = p => !tokens.length || tokens.every(t => (p.tracking || '').toLowerCase().includes(t) || (p.transportista || '').toLowerCase().includes(t)) || figsDe(p.id).some(f => matches(f, tokens));
-  const opts = sel => '<option value="">— sin paquete —</option>' + paqs.filter(p => p.estado !== 'entregado' || p.id === sel).sort((a, b) => (b.mes || '').localeCompare(a.mes || '')).map(p => `<option value="${p.id}"${p.id === sel ? ' selected' : ''}>${esc(paqNombre(p))}</option>`).join('');
+  const opts = sel => '<option value="">— sin paquete —</option>' + paqs.filter(p => p.estado !== 'entregado' || p.id === sel).sort((a, b) => colPaq(b).localeCompare(colPaq(a))).map(p => `<option value="${p.id}"${p.id === sel ? ' selected' : ''}>${esc(paqNombre(p))}</option>`).join('');
   const fcard = f => {
     const src = imgSrc(f);
     return `<div class="fcd" data-drag="fig" data-id="${f.uid}"><div class="fci" data-open="${f.uid}">${src ? `<img src="${esc(src)}" loading="lazy" referrerpolicy="no-referrer" draggable="false">` : '<div class="lph">?</div>'}${stIcon(f)}</div>
@@ -2102,18 +2134,21 @@ function renderPedidos() {
       <div class="pkn"><div class="r"><span>Figuras (${fs.length})</span><b>${eur(fs.reduce((s, f) => s + (+f.pagado || 0), 0))}</b></div><div class="r"><span>Envío${p.repartirEnvio ? ' · repartido' : ''}</span><b>${eur(envio)}</b></div><div class="r"><span>Aduana${p.repartir ? ' · repartida' : ''}</span><b>${eur(adu)}</b></div></div>
       <button class="llegbtn" data-lleg="${p.id}">${p.estado === 'entregado' ? (p.fechaLlegada ? `✓ Llegó el ${fmtFecha(p.fechaLlegada)}` : '✓ ¡Paquete recibido!') : 'Marcar que ha llegado'}</button></div>`;
   };
+  // ticket en el mes de envío de un paquete que llegó otro mes: lleva a él
+  const ptick = p => `<div class="pticket" data-paq="${p.id}" title="Abrir el paquete"><span class="pkst" style="background:#2a78d6">✈</span><div><b>${esc(p.tracking || 'Sin tracking')}</b><small>enviado ${fmtFecha(p.fechaEnvio)} · llegó en ${mesNombre(mesDeFecha(p.fechaLlegada))}</small></div><span class="ptv">${eur(envioDePaq(p))}<small>envío</small></span></div>`;
   const cols = MESES.map((n, i) => {
     const ym = `${pedYear}-${String(i + 1).padStart(2, '0')}`;
     const fs = all.filter(f => (f.compra || '').startsWith(ym)).sort(cmpFig);
-    const ps = paqs.filter(p => p.mes === ym).sort((a, b) => (a.fechaEnvio || '').localeCompare(b.fechaEnvio || ''));
+    const ps = paqs.filter(p => colPaq(p) === ym).sort((a, b) => (a.fechaEnvio || '').localeCompare(b.fechaEnvio || ''));
+    const tickets = paqs.filter(p => ticketPaq(p) && mesDeFecha(p.fechaEnvio) === ym);
     const nend = fs.reduce((s, f) => s + (+f.pagado || 0), 0);
-    const env = ps.reduce((s, p) => s + (p.envio != null ? +p.envio : figsDe(p.id).reduce((a, f) => a + (+f.envio || 0), 0)), 0);
-    const adu = ps.reduce((s, p) => s + (p.aduana != null ? +p.aduana : figsDe(p.id).reduce((a, f) => a + (+f.aduanas || 0), 0)), 0);
-    const vf = fs.filter(okF), vp = ps.filter(okP);
+    const env = paqs.filter(p => mesEnvioPaq(p) === ym).reduce((s, p) => s + envioDePaq(p), 0);
+    const adu = paqs.filter(p => mesAduanaPaq(p) === ym).reduce((s, p) => s + aduanaDePaq(p), 0);
+    const vf = fs.filter(okF), vp = ps.filter(okP), vt = tickets.filter(okP);
     return `<div class="ymes${ym === hoyMes() ? ' hoy' : ''}" data-mes="${ym}"><div class="ymh">${n}<span>${fs.length ? fs.length + ' fig.' : ''}</span></div>
       <div class="yfigs">${vf.map(fcard).join('') || (tokens.length && fs.length ? '<div class="yvac">Sin coincidencias</div>' : '')}</div>
       <div class="ysep"></div>
-      <div class="ypaqs">${vp.map(pcard).join('')}</div>
+      <div class="ypaqs">${vt.map(ptick).join('')}${vp.map(pcard).join('')}</div>
       <div class="ytot"><b>Coste total mensual</b><div class="r"><span>Solo nendos</span>${eur(nend)}</div><div class="r"><span>Solo paquetes</span>${eur(env)}</div><div class="r"><span>Solo aduanas</span>${eur(adu)}</div><div class="r tot"><span>Total</span><b>${eur(nend + env + adu)}</b></div></div></div>`;
   }).join('');
   // buscando: salen todas las figuras que coinciden y no tienen fecha de compra completa (cualquier estado), para arrastrarlas a su mes
@@ -2122,17 +2157,21 @@ function renderPedidos() {
   const otrosAnyos = {}; if (buscando) all.filter(okF).forEach(f => { const y = (f.compra || '').slice(0, 4); if (/^\d{4}$/.test(y) && y !== pedYear && !sinFecha.includes(f)) (otrosAnyos[y] = otrosAnyos[y] || []).push(f); });
   const otrosTxt = Object.keys(otrosAnyos).sort().reverse().map(y => `<div class="otrog"><button class="otroy" data-year="${y}" title="Ir a ${y}">${y} <small>${otrosAnyos[y].length}</small> →</button><div class="sinfl">${otrosAnyos[y].sort(cmpFig).map(fcard).join('')}</div></div>`).join('');
   const soloAnyoF = all.filter(f => f.compra === pedYear).filter(okF).sort(cmpFig);
-  const soloAnyoP = paqs.filter(p => p.mes === pedYear).filter(okP);
+  const soloAnyoP = paqs.filter(p => colPaq(p) === pedYear).filter(okP);
   const yTot = all.filter(f => (f.compra || '').startsWith(pedYear)).reduce((s, f) => s + (+f.total || 0), 0);
   el.innerHTML = `<div class="pedbar">
       <div class="ytabs">${ylist.map(y => `<button class="ytab${y === pedYear ? ' on' : ''}${y > cur ? ' fut' : ''}" data-year="${y}">${y}</button>`).join('')}</div>
-      <span class="note">${pedYear}: ${all.filter(f => (f.compra || '').startsWith(pedYear)).length} figuras · ${paqs.filter(p => (p.mes || '').startsWith(pedYear)).length} paquetes · ${eur(yTot)}</span>
-      <span class="spacer"></span><button class="btn primary big" id="btnPaq">+ Nuevo paquete</button></div>
+      <span class="note">${pedYear}: ${all.filter(f => (f.compra || '').startsWith(pedYear)).length} figuras · ${paqs.filter(p => colPaq(p).startsWith(pedYear)).length} paquetes · ${eur(yTot)}</span>
+      <span class="spacer"></span>
+      <div class="vistaped"><span>Ver:</span><button class="${verPed.figs ? 'on' : ''}" data-vista="figs">${verPed.figs ? '▾' : '▸'} Figuras</button><button class="${verPed.paqs ? 'on' : ''}" data-vista="paqs">${verPed.paqs ? '▾' : '▸'} Paquetes</button></div>
+      <button class="btn primary big" id="btnPaq">+ Nuevo paquete</button></div>
     ${sinFecha.length ? `<div class="sinf${buscando ? ' busq' : ''}"><div class="sinfh"><b>${buscando ? 'Coinciden con tu búsqueda y no tienen fecha de compra' : 'Pendientes de recibir sin fecha de compra'}</b> <span>${sinFecha.length} · arrástralas al mes en que las pediste (se les pone el último día de ese mes)</span></div><div class="sinfl">${sinFecha.map(fcard).join('')}</div></div>` : ''}
     ${otrosTxt ? `<div class="sinf otrosy"><div class="sinfh"><b>También coinciden en otros años</b> <span>arrástralas a un mes de ${pedYear} si su fecha estaba mal, o pulsa el año para ir a él</span></div><div class="otrosl">${otrosTxt}</div></div>` : ''}
     <div class="ymes sinmes" data-mes="${pedYear}"><div class="sinfh"><b>${pedYear} · sin mes concreto</b> <span>${soloAnyoF.length + soloAnyoP.length ? 'arrástralas a su mes cuando lo sepas' : 'suelta aquí lo que solo sabes que es de este año'}</span></div><div class="sinfl">${soloAnyoF.map(fcard).join('')}${soloAnyoP.map(pcard).join('')}</div></div>
-    <div class="ygrid">${cols}</div>`;
+    <div class="ygrid${verPed.figs ? '' : ' sinfigs'}${verPed.paqs ? '' : ' sinpaqs'}">${cols}</div>`;
   $('btnPaq').onclick = () => openPaq(null);
+  el.querySelectorAll('.pticket').forEach(x => x.onclick = () => openPaq(x.dataset.paq));
+  el.querySelectorAll('[data-vista]').forEach(b => b.onclick = () => { verPed[b.dataset.vista] = !verPed[b.dataset.vista]; try { localStorage.setItem(KEY + '-verped', JSON.stringify(verPed)); } catch (e) {} renderPedidos(); });
   el.querySelectorAll('.otroy').forEach(b => b.onclick = () => { pedYear = b.dataset.year; renderPedidos(); });
   $('qcount').textContent = tokens.length ? `filtrando ${pedYear}` : '';
   $('searchWrap').classList.toggle('has', !!$('q').value.trim());
@@ -2194,8 +2233,10 @@ document.addEventListener('pointerup', e => {
   snap();
   if (ym.length === 4) {   // franja «sin mes» del año
     if (d.type === 'fig') { S.figs[d.id].compra = ym; toast(`Fecha de compra: solo ${ym}`); }
+    else if (colPaq(S.paquetes[d.id]) !== normMes(S.paquetes[d.id].mes)) { toast('Este paquete va en el mes de su fecha de llegada o de envío: cámbiala en el paquete'); }
     else { S.paquetes[d.id].mes = ym; toast(`Paquete en ${ym}, sin mes`); }
   } else if (d.type === 'fig') { const f = S.figs[d.id]; f.compra = moverAMes(f.compra, ym); toast(`Fecha de compra: ${fmtCompra(f.compra)}`); }
+  else if (colPaq(S.paquetes[d.id]) !== normMes(S.paquetes[d.id].mes)) { toast('Este paquete va en el mes de su fecha de llegada o de envío: cámbiala en el paquete'); }
   else { S.paquetes[d.id].mes = ym; toast(`Paquete movido a ${mesNombre(ym)}`); }
   save(); renderPedidos();
 });
@@ -2223,7 +2264,7 @@ function openPaq(id) {
       <div class="f"><label>Nº de seguimiento</label><input id="qTr" value="${esc(p.tracking)}" placeholder="CN1239…"></div>
       <div class="f"><label>Transportista</label><input id="qTp" value="${esc(p.transportista || '')}" placeholder="Japan Post, DHL…"></div>
       <div class="f"><label>Fecha de envío</label><input id="qFp" type="date" value="${esc(p.fechaEnvio || '')}"></div>
-      <div class="f"><label>Columna (mes y año)</label><div class="qmesy"><select id="qMesM"><option value="">sin mes</option>${MESES.map((n, i) => `<option value="${String(i + 1).padStart(2, '0')}"${(normMes(p.mes).slice(5, 7)) === String(i + 1).padStart(2, '0') ? ' selected' : ''}>${n}</option>`).join('')}</select><input id="qMesY" inputmode="numeric" maxlength="4" placeholder="año" value="${esc(normMes(p.mes).slice(0, 4))}"></div></div>
+      <div class="f"><label>Nº de pedido de la tienda</label><input id="qPed" value="${esc(p.pedido || '')}" placeholder="HQR…"></div>
     </div>
     <div class="row3" style="grid-template-columns:2fr 1fr;margin-top:10px">
       <div class="f"><label>Estado</label><div class="estado" id="qEst" style="grid-template-columns:repeat(4,1fr)">${Object.entries(PQE).map(([k, [i, n]]) => `<button data-st="${k}" class="${(p.estado || 'preparando') === k ? 'on' : ''}">${i} ${n}</button>`).join('')}</div></div>
@@ -2269,16 +2310,20 @@ function openPaq(id) {
     else if (e.key === 'Escape') { e.stopPropagation(); $('qRes').classList.remove('on'); }
   });
   $('qRes').addEventListener('pointerdown', e => { const r = e.target.closest('.qf[data-u]'); if (!r) return; e.preventDefault(); anadir(r.dataset.u); });
-  $('qFigs').addEventListener('click', e => { const b = e.target.closest('.qx'); if (!b) return; qSel.delete(b.closest('.qf').dataset.u); pintaSel(); });
+  $('qFigs').addEventListener('click', e => {
+    const b = e.target.closest('.qx'); if (b) { qSel.delete(b.closest('.qf').dataset.u); pintaSel(); return; }
+    const r = e.target.closest('.qf[data-u]'); if (r) { $('modalBg').classList.add('sobrepop'); openModal(r.dataset.u); }
+  });
   pintaSel();
   let est = p.estado || 'preparando';
+  $('qLl').addEventListener('change', () => { if ($('qLl').value) { est = 'entregado'; document.querySelectorAll('#qEst button').forEach(x => x.classList.toggle('on', x.dataset.st === 'entregado')); } });
   document.querySelectorAll('#qEst button').forEach(b => b.onclick = () => { est = b.dataset.st; document.querySelectorAll('#qEst button').forEach(x => x.classList.toggle('on', x === b)); });
   $('qSave').onclick = () => {
     snap();
     const antesP = { fechaEnvio: p.fechaEnvio || '', fechaLlegada: p.fechaLlegada || '' }, antesFigs = new Set(figsDe(p.id).map(f => f.uid));
-    Object.assign(p, { tracking: $('qTr').value.trim(), transportista: $('qTp').value.trim(), fechaEnvio: $('qFp').value, mes: (() => { const y = $('qMesY').value.trim(), mm = $('qMesM').value; return /^\d{4}$/.test(y) ? (mm ? `${y}-${mm}` : y) : p.mes; })(), estado: est, fechaLlegada: $('qLl').value,
+    Object.assign(p, { tracking: $('qTr').value.trim(), transportista: $('qTp').value.trim(), fechaEnvio: $('qFp').value, pedido: $('qPed').value.trim(), estado: $('qLl').value ? 'entregado' : est, fechaLlegada: $('qLl').value,
       envio: numParse($('qEn').value), aduana: numParse($('qAd').value), repartir: $('qRep').checked, repartirEnvio: $('qRepEnv').checked, notas: $('qNo').value.trim() });
-    S.paquetes[p.id] = p;
+    S.paquetes[p.id] = p; est = p.estado;
     const marcadas = [...document.querySelectorAll('.qfigs input')].filter(i => i.checked).map(i => i.value);
     Object.values(S.figs).forEach(f => { if (f.paquete === p.id && !marcadas.includes(f.uid)) f.paquete = ''; });
     let cambiadas = 0;
@@ -2290,7 +2335,9 @@ function openPaq(id) {
       else if (p[pk] && (!antesFigs.has(f.uid) || f[fk] !== p[pk])) f[fk] = p[pk];
     }));
     figsDe(p.id).forEach(tagAnyo);
+    if (p.pedido) figsDe(p.id).forEach(f => { if (!f.pedido) f.pedido = p.pedido; });
     save(); closePop(); render();
+    if (p.fechaLlegada && ticketPaq(p) && !antesP.fechaLlegada) toast(`El paquete pasa a ${mesNombre(colPaq(p))}; en ${mesNombre(mesDeFecha(p.fechaEnvio))} queda un aviso que lleva a él`);
     if (cambiadas) toast(`${cambiadas} figuras cambian de estado`);
   };
   if ($('qDel')) $('qDel').onclick = () => { snap(); Object.values(S.figs).forEach(f => { if (f.paquete === p.id) f.paquete = ''; }); delete S.paquetes[p.id]; save(); closePop(); render(); toast('Paquete eliminado (Ctrl+Z para recuperarlo)'); };
@@ -2681,7 +2728,7 @@ $('eXlsx').onclick = () => {
     'Etiquetas': (f.tags || []).map(t => '#' + t).join(' '), 'Ubicación': ubicacion(f.uid, idx), 'Faltan datos': faltan(f).join(', '), 'ID GoodSmile': f.gsId || ''
   }));
   const paqs = Object.values(S.paquetes || {}).sort((a, b) => (a.mes || '').localeCompare(b.mes || '')).map(p => ({
-    'Seguimiento': p.tracking || '', 'Transportista': p.transportista || '', 'Mes': p.mes || '', 'Fecha de envío': p.fechaEnvio || '',
+    'Seguimiento': p.tracking || '', 'Transportista': p.transportista || '', 'Mes': colPaq(p) || '', 'Nº de pedido': p.pedido || '', 'Fecha de envío': p.fechaEnvio || '',
     'Estado': (PQE[p.estado || 'preparando'] || [])[1] || '', 'Llegada': p.fechaLlegada || '', 'Envío (€)': p.envio ?? '', 'Aduana (€)': p.aduana ?? '',
     'Aduana repartida': sn(p.repartir), 'Figuras': figsDe(p.id).map(f => `${f.numero} ${f.nombre}`).join(' · '), 'Notas': p.notas || ''
   }));
@@ -2694,7 +2741,7 @@ $('eXlsx').onclick = () => {
 };
 
 /* ===================== ACTUALIZAR CATÁLOGO DE GOODSMILE ===================== */
-const MARCADOR = "(async () => {\n  if (!/goodsmile\\.com$/.test(location.hostname)) { alert('Abre goodsmile.com y pulsa aqu\u00ed otra vez.'); return; }\n  if (document.getElementById('nendomeBox')) return;\n  const box = document.createElement('div');\n  box.id = 'nendomeBox';\n  box.style.cssText = 'position:fixed;z-index:2147483647;top:20px;right:20px;width:380px;background:#fffaf4;color:#3b3330;border:2px solid #e2725b;border-radius:16px;padding:16px 18px;font:14px/1.45 system-ui,sans-serif;box-shadow:0 20px 50px rgba(0,0,0,.25)';\n  document.body.appendChild(box);\n  const pinta = h => { box.innerHTML = '<div style=\"font-weight:800;color:#e2725b;font-size:18px;margin-bottom:6px\">Nendome \u00b7 novedades</div>' + h; };\n  const m = location.hash.match(/nendome-max=(\\d+)/);\n  const maxId = m ? +m[1] : 0;\n  const FILTRO = { search_keyword: '', search_over18: false, search_category: [6, 15, 63, 59, 32, 93, 57, 51, 61, 41, 21, 36, 35], search_maker: [], search_title: [], search_status: '0', release_date_from: '', release_date_to: '', search_bonus: false, search_exclusive: false, search_sale: false, search_sales_origin: false, tag: [] };\n  const espera = ms => new Promise(r => setTimeout(r, ms));\n  // elegir: novedades o buscar algo concreto (tambi\u00e9n figuras antiguas que falten)\n  const palabra = await new Promise(ok => {\n    pinta('\u00bfQu\u00e9 quieres traer?<br><br><button id=\"nendomeN\" style=\"border:0;background:#e2725b;color:#fff;font-weight:700;border-radius:999px;padding:9px 18px;cursor:pointer\">Novedades</button><br><br>'\n      + '<small>O busca algo concreto que no te salga en Nendome (p. ej. <i>Yowamushi</i> o <i>Nendoroid Light</i>):</small><br>'\n      + '<input id=\"nendomeQ\" style=\"width:100%;margin:6px 0;padding:8px 10px;border:1px solid #e7dccd;border-radius:8px;font:inherit\">'\n      + '<button id=\"nendomeB\" style=\"border:1px solid #e7dccd;background:#fff;border-radius:999px;padding:8px 16px;cursor:pointer\">Buscar</button>');\n    document.getElementById('nendomeN').onclick = () => ok('');\n    const q = document.getElementById('nendomeQ');\n    document.getElementById('nendomeB').onclick = () => q.value.trim() && ok(q.value.trim());\n    q.onkeydown = e => { if (e.key === 'Enter' && q.value.trim()) ok(q.value.trim()); };\n    q.focus();\n  });\n  if (palabra) { FILTRO.search_keyword = palabra; FILTRO.search_category = []; }\n  const nuevos = [];\n  try {\n    let sinNovedades = 0, pagina = 0;\n    const tope = palabra ? 10 : maxId ? 25 : 5;\n    while (pagina < tope && sinNovedades < 2) {\n      pinta('Buscando figuras nuevas\u2026 p\u00e1gina ' + (pagina + 1) + '<br><small>Encontradas: ' + nuevos.length + '</small>');\n      const url = '/en/search/list?filter=' + encodeURIComponent(JSON.stringify(FILTRO)) + '&orderBy=1&limit=60&offset=' + (pagina * 60) + '&couponId=null&searchIndex=-1';\n      const html = await (await fetch(url)).text();\n      const doc = new DOMParser().parseFromString(html, 'text/html');\n      const items = doc.querySelectorAll('.p-product-list__item');\n      if (!items.length) break;\n      let aqui = 0;\n      items.forEach(it => {\n        const a = it.querySelector('a');\n        const id = +(((a ? a.getAttribute('href') : '') || '').match(/\\/product\\/(\\d+)/) || [])[1];\n        if (!id || (!palabra && maxId && id <= maxId)) return;\n        const nombre = ((it.querySelector('h2') || {}).textContent || '').trim();\n        const fc = it.querySelector('figcaption');\n        const numero = fc ? fc.textContent.trim() : '';\n        if (/^Nendoroid Doll/i.test(nombre) || /^\\(Box\\)/i.test(nombre)) return;\n        if (!/^Nendoroid/i.test(nombre)) return;                 // solo Nendoroid (tambi\u00e9n Light, Co-de, More\u2026 sin n\u00famero)\n        const im = it.querySelector('.b-product-item__image img');\n        const src = im ? im.getAttribute('src') : '';\n        const img = (src.split('/gsc-webrevo-sdk-storage-prd/product/image/')[1]) || '';\n        if (!nuevos.some(n => n[0] === id)) { nuevos.push([id, numero, nombre, img, '']); aqui++; }\n      });\n      sinNovedades = aqui ? 0 : sinNovedades + 1;\n      pagina++;\n      await espera(400);\n    }\n    const re = />\\s*Series\\s*<\\/h3>[\\s\\S]*?c-text-body\">([\\s\\S]*?)<\\/p>/i;\n    for (let i = 0; i < nuevos.length; i++) {\n      pinta('Leyendo la serie de cada figura\u2026 ' + (i + 1) + ' de ' + nuevos.length);\n      try {\n        const h = await (await fetch('/en/product/' + nuevos[i][0])).text();\n        const s = h.match(re);\n        if (s) { const t = document.createElement('textarea'); t.innerHTML = s[1]; nuevos[i][4] = t.value.replace(/\\s+/g, ' ').trim(); }\n      } catch (e) {}\n      await espera(150);\n    }\n    const datos = JSON.stringify({ nendome: 'catalogo', v: 1, fecha: new Date().toISOString(), items: nuevos });\n    if (!nuevos.length) { pinta('' + (palabra ? 'No he encontrado ninguna figura con \u00ab' + palabra + '\u00bb.' : 'No hay figuras nuevas desde tu \u00faltima actualizaci\u00f3n. \ud83c\udf89') + '<br><br><button id=\"nendomeX\" style=\"border:0;background:#3b3330;color:#fff;border-radius:999px;padding:8px 16px;cursor:pointer\">Cerrar</button>'); document.getElementById('nendomeX').onclick = () => box.remove(); return; }\n    pinta('<b>' + nuevos.length + (palabra ? ' figuras encontradas' : ' figuras nuevas') + '.</b> Las que ya tengas en el buscador se ignoran solas.<br><br>1. Pulsa <b>Copiar</b>.<br>2. Vuelve a Nendome \u2192 <b>\u21bb Cat\u00e1logo</b> \u2192 <b>Pegar novedades</b>.<br><br>'\n      + '<button id=\"nendomeC\" style=\"border:0;background:#e2725b;color:#fff;font-weight:700;border-radius:999px;padding:9px 18px;cursor:pointer\">Copiar</button> '\n      + '<button id=\"nendomeX\" style=\"border:1px solid #e7dccd;background:#fff;border-radius:999px;padding:8px 14px;cursor:pointer\">Cerrar</button>'\n      + '<textarea id=\"nendomeT\" readonly style=\"width:100%;height:70px;margin-top:10px;font:11px monospace;border:1px solid #e7dccd;border-radius:8px\"></textarea><div id=\"nendomeOk\" style=\"color:#2f8f4f;font-weight:700;margin-top:4px\"></div>');\n    const ta = document.getElementById('nendomeT'); ta.value = datos;\n    document.getElementById('nendomeX').onclick = () => box.remove();\n    document.getElementById('nendomeC').onclick = async () => {\n      let ok = false;\n      try { await navigator.clipboard.writeText(datos); ok = true; } catch (e) { ta.select(); try { ok = document.execCommand('copy'); } catch (_) {} }\n      document.getElementById('nendomeOk').textContent = ok ? '\u2713 Copiado. Ya puedes volver a Nendome.' : 'Selecciona el texto de arriba y c\u00f3pialo con Ctrl+C.';\n    };\n  } catch (e) {\n    pinta('Algo ha fallado: ' + e + '<br><small>Recarga goodsmile.com y vuelve a intentarlo.</small>');\n  }\n})();";
+const MARCADOR = "(async () => {\n  if (!/goodsmile\\.com$/.test(location.hostname)) { alert('Abre goodsmile.com y pulsa aqu\u00ed otra vez.'); return; }\n  if (document.getElementById('nendomeBox')) return;\n  const box = document.createElement('div');\n  box.id = 'nendomeBox';\n  box.style.cssText = 'position:fixed;z-index:2147483647;top:20px;right:20px;width:380px;background:#fffaf4;color:#3b3330;border:2px solid #e2725b;border-radius:16px;padding:16px 18px;font:14px/1.45 system-ui,sans-serif;box-shadow:0 20px 50px rgba(0,0,0,.25)';\n  document.body.appendChild(box);\n  const pinta = h => { box.innerHTML = '<div style=\"font-weight:800;color:#e2725b;font-size:18px;margin-bottom:6px\">Nendome \u00b7 novedades</div>' + h; };\n  const m = location.hash.match(/nendome-max=(\\d+)/);\n  const maxId = m ? +m[1] : 0;\n  const FILTRO = { search_keyword: '', search_over18: false, search_category: [6, 15, 63, 59, 32, 93, 57, 51, 61, 41, 21, 36, 35], search_maker: [], search_title: [], search_status: '0', release_date_from: '', release_date_to: '', search_bonus: false, search_exclusive: false, search_sale: false, search_sales_origin: false, tag: [] };\n  const espera = ms => new Promise(r => setTimeout(r, ms));\n  // elegir: novedades o buscar algo concreto (tambi\u00e9n figuras antiguas que falten)\n  const palabra = await new Promise(ok => {\n    pinta('\u00bfQu\u00e9 quieres traer?<br><br><button id=\"nendomeN\" style=\"border:0;background:#e2725b;color:#fff;font-weight:700;border-radius:999px;padding:9px 18px;cursor:pointer\">Novedades</button><br><br>'\n      + '<small>O busca algo concreto que no te salga en Nendome (p. ej. <i>Yowamushi</i> o <i>Nendoroid Light</i>):</small><br>'\n      + '<input id=\"nendomeQ\" style=\"width:100%;margin:6px 0;padding:8px 10px;border:1px solid #e7dccd;border-radius:8px;font:inherit\">'\n      + '<button id=\"nendomeB\" style=\"border:1px solid #e7dccd;background:#fff;border-radius:999px;padding:8px 16px;cursor:pointer\">Buscar</button>');\n    document.getElementById('nendomeN').onclick = () => ok('');\n    const q = document.getElementById('nendomeQ');\n    document.getElementById('nendomeB').onclick = () => q.value.trim() && ok(q.value.trim());\n    q.onkeydown = e => { if (e.key === 'Enter' && q.value.trim()) ok(q.value.trim()); };\n    q.focus();\n  });\n  if (palabra) { FILTRO.search_keyword = palabra; FILTRO.search_category = []; }\n  const nuevos = [];\n  try {\n    let sinNovedades = 0, pagina = 0;\n    const tope = palabra ? 10 : maxId ? 25 : 5;\n    while (pagina < tope && sinNovedades < 2) {\n      pinta('Buscando figuras nuevas\u2026 p\u00e1gina ' + (pagina + 1) + '<br><small>Encontradas: ' + nuevos.length + '</small>');\n      const url = '/en/search/list?filter=' + encodeURIComponent(JSON.stringify(FILTRO)) + '&orderBy=1&limit=60&offset=' + (pagina * 60) + '&couponId=null&searchIndex=-1';\n      const html = await (await fetch(url)).text();\n      const doc = new DOMParser().parseFromString(html, 'text/html');\n      const items = doc.querySelectorAll('.p-product-list__item');\n      if (!items.length) break;\n      let aqui = 0;\n      items.forEach(it => {\n        const a = it.querySelector('a');\n        const id = +(((a ? a.getAttribute('href') : '') || '').match(/\\/product\\/(\\d+)/) || [])[1];\n        if (!id || (!palabra && maxId && id <= maxId)) return;\n        const nombre = ((it.querySelector('h2') || {}).textContent || '').trim();\n        const fc = it.querySelector('figcaption');\n        const numero = fc ? fc.textContent.trim() : '';\n        if (/^Nendoroid Doll/i.test(nombre) || /^\\(Box\\)/i.test(nombre)) return;\n        if (!/^Nendoroid/i.test(nombre)) return;                 // solo Nendoroid (tambi\u00e9n Light, Co-de, More\u2026 sin n\u00famero)\n        const im = it.querySelector('.b-product-item__image img');\n        const src = im ? im.getAttribute('src') : '';\n        const img = (src.split('/gsc-webrevo-sdk-storage-prd/product/image/')[1]) || '';\n        if (!nuevos.some(n => n[0] === id)) { nuevos.push([id, numero, nombre, img, '']); aqui++; }\n      });\n      sinNovedades = aqui ? 0 : sinNovedades + 1;\n      pagina++;\n      await espera(150);\n    }\n    const re = />\\s*Series\\s*<\\/h3>[\\s\\S]*?c-text-body\">([\\s\\S]*?)<\\/p>/i;\n    // series: varias a la vez (6) para que vaya r\u00e1pido; se puede saltar y copiar sin ellas\n    let hechas = 0, saltar = false, sig = 0;\n    const progreso = () => { pinta('Leyendo la serie de cada figura\u2026 ' + hechas + ' de ' + nuevos.length + '<br><br><button id=\"nendomeS\" style=\"border:1px solid #e7dccd;background:#fff;border-radius:999px;padding:6px 14px;cursor:pointer;font-size:12px\">Saltar y copiar sin series</button>'); document.getElementById('nendomeS').onclick = () => { saltar = true; }; };\n    progreso();\n    const trabajador = async () => {\n      while (!saltar && sig < nuevos.length) {\n        const i = sig++;\n        try {\n          const h = await (await fetch('/en/product/' + nuevos[i][0])).text();\n          const s = h.match(re);\n          if (s) { const t = document.createElement('textarea'); t.innerHTML = s[1]; nuevos[i][4] = t.value.replace(/\\s+/g, ' ').trim(); }\n        } catch (e) {}\n        hechas++; if (hechas % 3 === 0 || hechas === nuevos.length) progreso();\n      }\n    };\n    await Promise.all(Array.from({ length: 6 }, trabajador));\n    const datos = JSON.stringify({ nendome: 'catalogo', v: 1, fecha: new Date().toISOString(), items: nuevos });\n    if (!nuevos.length) { pinta('' + (palabra ? 'No he encontrado ninguna figura con \u00ab' + palabra + '\u00bb.' : 'No hay figuras nuevas desde tu \u00faltima actualizaci\u00f3n. \ud83c\udf89') + '<br><br><button id=\"nendomeX\" style=\"border:0;background:#3b3330;color:#fff;border-radius:999px;padding:8px 16px;cursor:pointer\">Cerrar</button>'); document.getElementById('nendomeX').onclick = () => box.remove(); return; }\n    pinta('<b>' + nuevos.length + (palabra ? ' figuras encontradas' : ' figuras nuevas') + '.</b> Las que ya tengas en el buscador se ignoran solas.<br><br>1. Pulsa <b>Copiar</b>.<br>2. Vuelve a Nendome \u2192 <b>\u21bb Cat\u00e1logo</b> \u2192 <b>Pegar novedades</b>.<br><br>'\n      + '<button id=\"nendomeC\" style=\"border:0;background:#e2725b;color:#fff;font-weight:700;border-radius:999px;padding:9px 18px;cursor:pointer\">Copiar</button> '\n      + '<button id=\"nendomeX\" style=\"border:1px solid #e7dccd;background:#fff;border-radius:999px;padding:8px 14px;cursor:pointer\">Cerrar</button>'\n      + '<textarea id=\"nendomeT\" readonly style=\"width:100%;height:70px;margin-top:10px;font:11px monospace;border:1px solid #e7dccd;border-radius:8px\"></textarea><div id=\"nendomeOk\" style=\"color:#2f8f4f;font-weight:700;margin-top:4px\"></div>');\n    const ta = document.getElementById('nendomeT'); ta.value = datos;\n    document.getElementById('nendomeX').onclick = () => box.remove();\n    document.getElementById('nendomeC').onclick = async () => {\n      let ok = false;\n      try { await navigator.clipboard.writeText(datos); ok = true; } catch (e) { ta.select(); try { ok = document.execCommand('copy'); } catch (_) {} }\n      document.getElementById('nendomeOk').textContent = ok ? '\u2713 Copiado. Ya puedes volver a Nendome.' : 'Selecciona el texto de arriba y c\u00f3pialo con Ctrl+C.';\n    };\n  } catch (e) {\n    pinta('Algo ha fallado: ' + e + '<br><small>Recarga goodsmile.com y vuelve a intentarlo.</small>');\n  }\n})();";
 const T_CAT = 'nendome_catalogo';
 let catUltima = null, catExtra = 0;
 const maxIdCatalogo = () => CATALOGO.reduce((m, r) => Math.max(m, +r[0] || 0), 0);
