@@ -633,6 +633,15 @@ input[readonly]{cursor:default!important}
 #modal.custom .form{grid-template-columns:170px 1fr!important}
 /* paquete en camino */
 .pkc.viaje .pkh{background:#fbb03b}
+
+/* asas de fila */
+.shelf.filas{padding-left:30px;padding-right:30px}
+.rowh{position:absolute;top:50%;transform:translateY(-50%);width:22px;height:40px;display:flex;align-items:center;justify-content:center;font-size:18px;color:#8a8f98;cursor:grab;border-radius:6px;user-select:none;z-index:2}
+.rowh:hover{background:#e3e6ea;color:#3b3330}
+.rowh.l{left:-26px}.rowh.r{right:-26px}
+.alt.rowsrc{outline:2px dashed #b9c0c8;outline-offset:1px}
+.alt.rowover{outline:3px solid var(--accent);outline-offset:1px;background-color:rgba(226,114,91,.08)}
+body:has(.alt.rowsrc) *{cursor:grabbing!important}
 </style>
 </head>
 <body>
@@ -995,7 +1004,7 @@ function renderShelves() {
     for (let b = 0; b < sh.baldas; b++) {
       body += '<div class="balda">';
       for (let a = 0; a < sh.alts; a++) {
-        body += `<div class="alt" data-b="${b}" data-a="${a}" style="width:${sh.cols * W}px">`;
+        body += `<div class="alt" data-b="${b}" data-a="${a}" style="width:${sh.cols * W}px">` + (sh.cols > 1 ? `<span class="rowh l" title="Arrastra para mover la fila entera">⠿</span><span class="rowh r" title="Arrastra para mover la fila entera">⠿</span>` : '');
         for (let c = 0; c < sh.cols; c++) {
           const u = S.place[`${sh.id}:${b}:${a}:${c}`]; const f = u && S.figs[u];
           if (f && f.estado !== 'vendida') { used++; body += figHTML(f, c * W + 2); }
@@ -1004,7 +1013,7 @@ function renderShelves() {
       }
       body += '</div>';
     }
-    h += `<div class="shelf${sh.cols === 1 ? ' narrow' : ''}" data-sid="${sh.id}">` +
+    h += `<div class="shelf${sh.cols === 1 ? ' narrow' : ' filas'}" data-sid="${sh.id}">` +
       `<div class="shelf-head" data-sid="${sh.id}" title="Arrastra para cambiar de sitio · doble clic para renombrar"><span class="n">${esc(sh.nombre)}</span><span class="c">${sh.tipo} · ${used}/${cap}</span></div>` +
       body + '</div>';
   }
@@ -1024,7 +1033,7 @@ function layoutShelves(skipEl) {
 function renderTray() {
   const idx = slotIndex();
   const incQ = $('trayQuiero').checked;
-  const list = Object.values(S.figs).filter(f => !idx[f.uid] && f.estado !== 'vendida' && (incQ || f.estado !== 'quiero')).sort((a, b) => ((b.trayTime || 0) - (a.trayTime || 0)) || cmpFig(a, b));
+  const list = Object.values(S.figs).filter(f => !idx[f.uid] && f.estado !== 'vendida' && (incQ || f.estado !== 'quiero')).sort(cmpFig);
   $('trayCount').textContent = list.length;
   $('trayGrid').innerHTML = list.length ? list.map(f => figHTML(f)).join('') : '<div class="tray-empty">Todo colocado ✨</div>';
 }
@@ -1071,7 +1080,7 @@ function applyView() {
 }
 function updateSel() {
   document.querySelectorAll('.fig').forEach(el => el.classList.toggle('sel', sel.has(el.dataset.uid)));
-  const n = sel.size; $('selbar').classList.toggle('on', n > 0);
+  const n = sel.size; $('selbar').classList.remove('on');
   $('selText').textContent = n === 1 ? '1 seleccionada' : n + ' seleccionadas';
 }
 
@@ -1157,6 +1166,8 @@ document.addEventListener('pointerdown', e => {
   if (e.button !== 0 || $('modalBg').classList.contains('on')) return;
   if (e.target.closest('#splitter')) { drag = { type: 'split', x0: e.clientX, y0: e.clientY, w: $('tray').offsetWidth }; $('splitter').classList.add('on'); document.body.classList.add('resizing'); e.preventDefault(); return; }
   if (!e.target.closest('.menu')) $('menuPop').classList.remove('on');
+  const rh = e.target.closest('.rowh');
+  if (rh) { e.preventDefault(); const alt = rh.closest('.alt'); drag = { type: 'row', sid: alt.closest('.shelf').dataset.sid, b: +alt.dataset.b, a: +alt.dataset.a, x0: e.clientX, y0: e.clientY }; alt.classList.add('rowsrc'); return; }
   const fig = e.target.closest('#world .fig, #trayGrid .fig');
   const head = e.target.closest('.shelf-head') || (!e.target.closest('.alt') && e.target.closest('.shelf'));
   const inView = e.target.closest('#view');
@@ -1193,6 +1204,12 @@ document.addEventListener('pointermove', e => {
     ghost.style.display = 'block';
   }
   if (drag.type === 'split') { setTrayW(drag.w + dx); return; }
+  if (drag.type === 'row') {
+    document.querySelectorAll('.alt.rowover').forEach(x => x.classList.remove('rowover'));
+    const el = document.elementFromPoint(e.clientX, e.clientY), alt = el && el.closest('.shelf.filas .alt');
+    if (alt) alt.classList.add('rowover');
+    return;
+  }
   if (drag.type === 'fig') {
     ghost.style.left = e.clientX + 'px'; ghost.style.top = e.clientY + 'px';
     highlightTarget(e.clientX, e.clientY);
@@ -1245,6 +1262,11 @@ document.addEventListener('pointerup', e => {
   if (!drag) return;
   const d = drag; drag = null;
   $('view').classList.remove('panning');
+  if (d.type === 'row') {
+    const alt = document.querySelector('.alt.rowover'); document.querySelectorAll('.alt.rowover, .alt.rowsrc').forEach(x => x.classList.remove('rowover', 'rowsrc'));
+    if (alt) moverFila(d, { sid: alt.closest('.shelf').dataset.sid, b: +alt.dataset.b, a: +alt.dataset.a });
+    return;
+  }
   if (d.type === 'split') { $('splitter').classList.remove('on'); document.body.classList.remove('resizing'); try { localStorage.setItem(KEY + '-tray', $('tray').offsetWidth); } catch (e) {} return; }
   if (d.type === 'fig?') {
     if (!d.shift && d.was && sel.size > 1) { sel = new Set([d.u]); updateSel(); }
@@ -1272,6 +1294,22 @@ document.addEventListener('pointerup', e => {
   }
 });
 
+// intercambia dos filas (cada figura conserva su columna); si la de destino es más corta, las que no caben van a «sin colocar»
+function moverFila(o, d) {
+  if (o.sid === d.sid && o.b === d.b && o.a === d.a) return;
+  const so = shelfById(o.sid), sd = shelfById(d.sid);
+  const fila = (sh, x) => Array.from({ length: sh.cols }, (_, c) => S.place[`${sh.id}:${x.b}:${x.a}:${c}`] || null);
+  const A = fila(so, o), B = fila(sd, d);
+  if (!A.some(Boolean) && !B.some(Boolean)) return;
+  snap();
+  for (let c = 0; c < so.cols; c++) delete S.place[`${so.id}:${o.b}:${o.a}:${c}`];
+  for (let c = 0; c < sd.cols; c++) delete S.place[`${sd.id}:${d.b}:${d.a}:${c}`];
+  let fuera = 0;
+  A.forEach((u, c) => { if (!u) return; if (c < sd.cols) S.place[`${sd.id}:${d.b}:${d.a}:${c}`] = u; else { toTray(u); fuera++; } });
+  B.forEach((u, c) => { if (!u) return; if (c < so.cols) S.place[`${so.id}:${o.b}:${o.a}:${c}`] = u; else { toTray(u); fuera++; } });
+  if (fuera) toast(`${fuera} no cabían en la fila más corta: van a «sin colocar»`);
+  save(); render();
+}
 function dropOn(t) {
   const uids = [...sel].filter(u => S.figs[u]);
   if (!uids.length) return render();
@@ -2106,12 +2144,20 @@ let pedYear = String(new Date().getFullYear());
 // reparte un importe en partes iguales; los céntimos que sobran van a la primera figura
 function partes(total, n) { const c = Math.round(total * 100), base = Math.floor(c / n), resto = c - base * n; return Array.from({ length: n }, (_, i) => (base + (i < resto ? 1 : 0)) / 100); }
 // el envío y la aduana de un paquete con «repartir» mandan sobre los de cada ficha, también si se editan después
+// como en el Excel: aduana de f1 = valor f1 / (valor f1 + valor f2 + …) × aduana; sin precios, a partes iguales
+function partesProp(total, pesos) {
+  const suma = pesos.reduce((a, b) => a + b, 0); if (!suma) return partes(total, pesos.length);
+  const c = Math.round(total * 100), out = pesos.map(w => Math.floor(c * w / suma)), resto = c - out.reduce((a, b) => a + b, 0);
+  const orden = pesos.map((w, i) => [c * w / suma - out[i], i]).sort((a, b) => b[0] - a[0]);
+  for (let k = 0; k < resto; k++) out[orden[k % orden.length][1]]++;
+  return out.map(x => x / 100);
+}
 function aplicarRepartos() {
   Object.values(S.paquetes || {}).forEach(p => {
     const env = p.repartirEnvio && p.envio != null, adu = p.repartir && p.aduana != null;
     if (!env && !adu) return;
     const fs = figsDe(p.id); if (!fs.length) return;
-    const pe = env ? partes(+p.envio, fs.length) : null, pa = adu ? partes(+p.aduana, fs.length) : null;
+    const pe = env ? partes(+p.envio, fs.length) : null, pa = adu ? partesProp(+p.aduana, fs.map(f => +f.pagado || 0)) : null;
     fs.forEach((f, i) => {
       if (env) f.envio = pe[i];
       if (adu) f.aduanas = pa[i];
@@ -2306,7 +2352,7 @@ function openPaq(id) {
       <div class="f"><label>Envío del paquete (€)</label><input id="qEn" value="${numFmt(p.envio)}" inputmode="decimal" placeholder="suma de sus figuras"></div>
       <div class="f"><label>Aduana / IVA (€)</label><input id="qAd" value="${numFmt(p.aduana)}" inputmode="decimal"></div>
       <div class="chks"><label class="chk"><input type="checkbox" id="qRepEnv"${p.repartirEnvio ? ' checked' : ''}> Repartir el envío entre sus figuras</label>
-      <label class="chk"><input type="checkbox" id="qRep"${p.repartir ? ' checked' : ''}> Repartir la aduana entre sus figuras</label>
+      <label class="chk"><input type="checkbox" id="qRep"${p.repartir ? ' checked' : ''}> Repartir la aduana entre sus figuras <small>(en proporción al precio de cada una)</small></label>
       <small>Sustituye lo que tengan en su ficha y se recalcula si cambias el importe o las figuras.</small></div>
     </div>
     <div class="f" style="margin-top:10px"><label>Notas</label><input id="qNo" value="${esc(p.notas || '')}"></div>
