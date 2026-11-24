@@ -624,6 +624,15 @@ input[readonly]{cursor:default!important}
 #qFigs .qf[data-u]{cursor:pointer}
 #qFigs .qf[data-u]:hover{background:var(--bg)}
 #modalBg.sobrepop{z-index:80}
+
+/* Lo quiero en la colección: imagen en alfa y número en magenta */
+.fig.quiero .pic img{opacity:.45}
+.fig.quiero .num{background:#e0389a;color:#fff}
+/* Custom: solo número, nombre, imagen, etiquetas y notas */
+#modal.custom .fields+.fields,#modal.custom .fields:has(#fSerie)>.f:has(#fSerie),#modal.custom .pedbloque>.row2,#modal.custom #fVenta,#modal.custom #fGs{display:none!important}
+#modal.custom .form{grid-template-columns:170px 1fr!important}
+/* paquete en camino */
+.pkc.viaje .pkh{background:#fbb03b}
 </style>
 </head>
 <body>
@@ -699,7 +708,7 @@ input[readonly]{cursor:default!important}
 <div id="marquee"></div>
 <div id="tip"></div>
 <div id="gate" class="gate on"><div class="gbox" id="gbox"><div class="glogo">Nendome</div><div class="gmsg">Cargando…</div></div></div>
-<div id="selbar"><span id="selText"></span><button data-st="quiero">♥ Quiero</button><button data-st="reservada">R Reservada</button><button data-st="pagado">€ Pagada</button><button data-st="warehouse">W Warehouse</button><button data-st="enviada">➜ En camino</button><button data-st="casa">✓ En casa</button><button data-st="venta">💵 En venta</button><button data-st="vendida">✕ Vendida</button><button data-st="">Sin marca</button><button id="selToTray">Mandar a «sin colocar»</button><button id="selClear">Quitar selección</button></div>
+<div id="selbar"><span id="selText"></span><button data-st="quiero">♥ Quiero</button><button data-st="reservada">R Reservada</button><button data-st="pagado">€ Pagada</button><button data-st="warehouse">W Warehouse</button><button data-st="enviada">➜ En camino</button><button data-st="casa">✓ En casa</button><button data-st="venta">💵 En venta</button><button data-st="vendida">✕ Vendida</button><button data-st="custom">C Custom</button><button data-st="">Sin marca</button><button id="selExtr">📋 Extraer info para pedido</button><button id="selToTray">Mandar a «sin colocar»</button><button id="selClear">Quitar selección</button></div>
 <div id="help"><b>Clic</b> seleccionar · <b>Mayús+clic</b> añadir a la selección · <b>Mayús+arrastrar</b> recuadro<br><b>Arrastrar título</b> mover estantería · <b>Arrastrar fondo</b> mover vista · <b>Rueda</b> zoom · <b>Doble clic</b> editar · <b>♥ ⏳ ✓ !</b> filtros junto al buscador · <b>Ctrl+Z</b> deshacer</div>
 <div id="toast"></div>
 
@@ -722,7 +731,7 @@ input[readonly]{cursor:default!important}
           <button id="imgDel" type="button">quitar</button>
         </div>
         <input type="file" id="imgFile" accept="image/*" hidden>
-        <button type="button" class="btn copybtn izq" id="fCopy" title="Copia «Nº de pedido - Nombre» para pedir a la tienda"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></svg> Copiar info para pedido</button>
+        
       </div>
       <div class="fields">
         <div class="row2">
@@ -730,7 +739,7 @@ input[readonly]{cursor:default!important}
           <div class="f"><label>Nombre</label><input id="fName" placeholder="Nendoroid Reg"></div>
         </div>
         <div class="f"><label>Serie (anime, película o juego)</label><input id="fSerie" placeholder=""></div>
-        <div class="f"><label>Estado</label><div class="estado" id="fEstado"><button data-st="">Sin marca</button><button data-st="quiero">♥ Lo quiero</button><button data-st="reservada">R Reservada</button><button data-st="pagado">€ Pagada</button><button data-st="warehouse">W Warehouse</button><button data-st="enviada">➜ En camino</button><button data-st="casa">✓ En casa</button><button data-st="venta">💵 En venta</button><button data-st="vendida">✕ Vendida</button></div></div>
+        <div class="f"><label>Estado</label><div class="estado" id="fEstado"><button data-st="">Sin marca</button><button data-st="quiero">♥ Lo quiero</button><button data-st="reservada">R Reservada</button><button data-st="pagado">€ Pagada</button><button data-st="warehouse">W Warehouse</button><button data-st="enviada">➜ En camino</button><button data-st="casa">✓ En casa</button><button data-st="venta">💵 En venta</button><button data-st="vendida">✕ Vendida</button><button data-st="custom">C Custom</button></div></div>
         <div class="f"><label>Etiquetas (separa con comas o #)</label><div class="tagwrap"><input id="fTags" placeholder="#medieval #fantasía" autocomplete="off"><div class="tagsug" id="tagSug"></div></div><div class="chips" id="chips"></div></div>
         <div class="pedbloque">
           <div class="row2" style="grid-template-columns:1fr 1fr">
@@ -812,9 +821,9 @@ const catDe = f => (f.gsId && CAT_BY_ID[String(f.gsId)]) || (/^\d/.test(f.numero
 
 /* ===================== ESTADO ===================== */
 const KEY = 'nendoboard-v1';
-const ESTADOS = { quiero: '♥ Lo quiero', reservada: 'R Reservada', pagado: '€ Pagada', warehouse: 'W Warehouse', enviada: '➜ En camino', casa: '✓ En casa', venta: '$ En venta', vendida: '✕ Vendida' };
+const ESTADOS = { quiero: '♥ Lo quiero', reservada: 'R Reservada', pagado: '€ Pagada', warehouse: 'W Warehouse', enviada: '➜ En camino', casa: '✓ En casa', venta: '$ En venta', vendida: '✕ Vendida', custom: 'C Custom' };
 // icono, color y nombre de cada estado (orden: reservada → pagada → warehouse → en camino → en casa)
-const ICO = { reservada: ['R', '#d98a00', 'Reservada'], pagado: ['€', '#0f9d8a', 'Pagada'], warehouse: ['W', '#7b5cd6', 'Warehouse'], enviada: ['➜', '#2a78d6', 'En camino'], casa: ['✓', '#39b54a', 'En casa'], venta: ['<svg viewBox="0 0 24 16" width="13" height="9"><rect x="1" y="1.5" width="22" height="13" rx="2" fill="none" stroke="#fff" stroke-width="1.6"/><circle cx="12" cy="8" r="3" fill="none" stroke="#fff" stroke-width="1.4"/></svg>', '#2e9e4f', 'En venta'], vendida: ['✕', '#d6453a', 'Vendida'] };
+const ICO = { reservada: ['R', '#00adea', 'Reservada'], pagado: ['€', '#0926d1', 'Pagada', '#fcee21'], warehouse: ['W', '#f46c21', 'Warehouse'], custom: ['C', '#b93ed6', 'Custom'], enviada: ['➜', '#2a78d6', 'En camino'], casa: ['✓', '#39b54a', 'En casa'], venta: ['<svg viewBox="0 0 24 16" width="13" height="9"><rect x="1" y="1.5" width="22" height="13" rx="2" fill="none" stroke="#fff" stroke-width="1.6"/><circle cx="12" cy="8" r="3" fill="none" stroke="#fff" stroke-width="1.4"/></svg>', '#2e9e4f', 'En venta'], vendida: ['✕', '#d6453a', 'Vendida'] };
 const PEND = ['reservada', 'pagado', 'warehouse', 'enviada'], COMPRADO = [...PEND, 'casa'];
 // la imagen que pegas tú (imgUser) manda siempre sobre la importada (GoodSmile o Excel)
 const imgSrc = f => f.imgUser ? f.imgUser : !f.img ? '' : f.img.startsWith('xl:') ? (XLPICS[f.img.slice(3)] ? 'data:image/jpeg;base64,' + XLPICS[f.img.slice(3)] : '') : f.img;
@@ -838,12 +847,19 @@ function defaultShelves() {
   for (let i = 1; i <= 5; i++) add('80 cm', 12, 8, 3);
   for (let i = 1; i <= 2; i++) add('40 cm', 6, 8, 3);
   add('20 cm', 1, 16, 1);
-  return autoNames(ORDEN_REAL.map(id => s.find(x => x.id === id)));
+  return anadirExtras(autoNames(ORDEN_REAL.map(id => s.find(x => x.id === id))));
 }
 function autoNames(list) {
-  const n = { '80 cm': 0, '40 cm': 0, '20 cm': 0 }, base = { '80 cm': 'Doble', '40 cm': 'Simple', '20 cm': 'Ultrafina' };
-  list.forEach(sh => { n[sh.tipo]++; if (!sh.custom) sh.nombre = base[sh.tipo] + (sh.tipo === '20 cm' ? '' : ' ' + n[sh.tipo]); });
+  const n = { '80 cm': 0, '40 cm': 0, '20 cm': 0, 'módulo 4×6': 0 }, base = { '80 cm': 'Doble', '40 cm': 'Simple', '20 cm': 'Ultrafina', 'módulo 4×6': 'Módulo' };
+  list.forEach(sh => { n[sh.tipo] = (n[sh.tipo] || 0) + 1; if (!sh.custom) sh.nombre = (base[sh.tipo] || 'Estantería') + (sh.tipo === '20 cm' && n[sh.tipo] === 1 ? '' : ' ' + n[sh.tipo]); });
   return list;
+}
+function anadirExtras(list) {
+  if (list.some(s => s.id === 'u2')) return list;
+  const extra = [{ id: 'u2', nombre: '', tipo: '20 cm', cols: 1, baldas: 6, alts: 1 }, ...[1, 2, 3].map(i => ({ id: 'm' + i, nombre: '', tipo: 'módulo 4×6', cols: 6, baldas: 4, alts: 1 }))];
+  let i = list.findIndex(s => s.nombre === 'Doble 5'); if (i < 0) { const d = list.filter(s => s.tipo === '80 cm'); i = list.indexOf(d[4] || d[d.length - 1]); }
+  list.splice(i < 0 ? list.length : i + 1, 0, ...extra);
+  return autoNames(list);
 }
 function defaultState() {
   return { v: 4, figs: {}, shelves: defaultShelves(), place: {}, paquetes: {} };
@@ -852,6 +868,7 @@ function sanitize(st) {
   if (!st || typeof st !== 'object') return defaultState();
   st.figs = st.figs || {}; st.place = st.place || {}; st.paquetes = st.paquetes || {};
   if (!Array.isArray(st.shelves) || !st.shelves.length) st.shelves = defaultShelves();
+  else anadirExtras(st.shelves);
   if ((st.v || 1) < 2) {   // migración: orden real de la habitación y nombres nuevos
     const byId = Object.fromEntries(st.shelves.map(s => [s.id, s]));
     if (ORDEN_REAL.every(id => byId[id])) st.shelves = autoNames(ORDEN_REAL.map(id => byId[id]));
@@ -902,6 +919,15 @@ function slotIndex() { const m = {}; for (const k in S.place) m[S.place[k]] = k;
 function toTray(u) { if (S.figs[u]) S.figs[u].trayTime = Date.now() + (++trayTick); }
 function unplace(u) { for (const k in S.place) if (S.place[k] === u) delete S.place[k]; }
 function shelfById(id) { return S.shelves.find(s => s.id === id); }
+// si todas las seleccionadas están en estanterías, se mueven conservando su forma (filas y columnas) respecto a la que arrastras
+let dragAncla = null;
+function formaDestino(t, uids) {
+  const idx = slotIndex(); if (!dragAncla || !uids.every(u => idx[u])) return null;
+  const pos = u => { const [sid, b, a, c] = idx[u].split(':'); const sh = shelfById(sid); return { r: +b * sh.alts + +a, c: +c }; };
+  const p0 = pos(dragAncla), [sid, b, a, c] = t.k.split(':'), sh = shelfById(sid), r0 = +b * sh.alts + +a, filas = sh.baldas * sh.alts;
+  return uids.map(u => { const p = pos(u), r = r0 + p.r - p0.r, cc = +c + p.c - p0.c;
+    return r < 0 || r >= filas || cc < 0 || cc >= sh.cols ? null : `${sid}:${Math.floor(r / sh.alts)}:${r % sh.alts}:${cc}`; });
+}
 function seqFrom(sh, b, a, c, n) {
   const out = [];
   for (let bb = b; bb < sh.baldas; bb++)
@@ -926,6 +952,7 @@ const ETAPA_CAMPOS = [
   { estados: ['casa', 'venta', 'vendida'], campos: ['fechaLlegada', 'aduanas'] },
   { estados: ['venta'], campos: ['ventaPide'] },
   { estados: ['vendida'], campos: ['ventaPrecio', 'ventaFecha'] },
+  { estados: ['custom'], campos: ['imagen', 'nombre'] },
 ];
 const NOMBRE_CAMPO = { imagen: 'imagen', numero: 'número', nombre: 'nombre', serie: 'serie', genero: 'género', lanzamiento: 'lanzamiento', precioJPY: 'precio oficial', tienda: 'tienda', condicion: 'condición', compra: 'fecha de compra', estimado: 'coste estimado', pedido: 'nº de pedido', pagado: 'precio de la figura', fechaEnvio: 'fecha de envío', envio: 'envío', paquete: 'paquete', fechaLlegada: 'fecha de llegada', aduanas: 'IVA/aduana', ventaPide: 'precio de venta', ventaPrecio: 'vendida por', ventaFecha: 'fecha de venta' };
 const vacioCampo = v => v == null || v === '';
@@ -952,9 +979,9 @@ function figHTML(f, left) {
   const fl = faltan(f);
   const icons = (fl.length ? `<span class="bang" title="Falta: ${fl.join(', ')}">!</span>` : '') +
     (f.estado === 'quiero' ? '<span class="heart" title="Lo quiero">♥</span>' : '') +
-    (ICO[f.estado] ? `<span class="tick" style="background:${ICO[f.estado][1]}" title="${ICO[f.estado][2]}">${ICO[f.estado][0]}</span>` : '');
+    (ICO[f.estado] ? `<span class="tick" style="background:${ICO[f.estado][1]};color:${ICO[f.estado][3] || '#fff'}" title="${ICO[f.estado][2]}">${ICO[f.estado][0]}</span>` : '');
   const nota = (f.notas || '').trim() ? `<span class="lupa" title="${esc(f.notas)}">${LUPA_SVG}</span>` : '';
-  return `<div class="fig${sel.has(f.uid) ? ' sel' : ''}${f.estado === 'vendida' ? ' vendida' : f.estado === 'venta' ? ' venta' : ''}" data-uid="${f.uid}" title="${esc(title)}"${left != null ? ` style="left:${left}px"` : ''}><div class="pic">` +
+  return `<div class="fig${sel.has(f.uid) ? ' sel' : ''}${f.estado === 'vendida' ? ' vendida' : f.estado === 'venta' ? ' venta' : f.estado === 'quiero' ? ' quiero' : ''}" data-uid="${f.uid}" title="${esc(title)}"${left != null ? ` style="left:${left}px"` : ''}><div class="pic">` +
     `<div class="ph">?</div>` +
     (imgSrc(f) ? `<img src="${esc(imgSrc(f))}" loading="lazy" decoding="async" draggable="false" referrerpolicy="no-referrer" onerror="this.remove()">` : '') +
     (f.numero ? `<span class="num">${esc(f.numero)}</span>` : '') + nota + icons + `</div><div class="lbl">${short}</div></div>`;
@@ -1158,6 +1185,7 @@ document.addEventListener('pointermove', e => {
   const dx = e.clientX - drag.x0, dy = e.clientY - drag.y0, far = Math.hypot(dx, dy) > 5;
   if (drag.type === 'fig?' && far) {
     if (!sel.has(drag.u)) sel.add(drag.u);
+    dragAncla = drag.u;
     drag.type = 'fig';
     document.querySelectorAll('.fig').forEach(el => { if (sel.has(el.dataset.uid)) el.classList.add('dragging'); });
     const first = S.figs[drag.u];
@@ -1206,7 +1234,7 @@ function highlightTarget(x, y) {
   if (t.tray) { $('tray').classList.add('over'); return; }
   const [sid, b, a, c] = t.k.split(':'); const sh = shelfById(sid);
   const shEl = document.querySelector(`.shelf[data-sid="${sid}"]`);
-  seqFrom(sh, +b, +a, +c, sel.size).forEach(k => {
+  (formaDestino(t, [...sel].filter(u => S.figs[u])) || seqFrom(sh, +b, +a, +c, sel.size)).filter(Boolean).forEach(k => {
     const [, bb, aa, cc] = k.split(':');
     const alt = shEl.querySelector(`.alt[data-b="${bb}"][data-a="${aa}"]`); if (!alt) return;
     const d = document.createElement('div'); d.className = 'hl'; d.style.left = (cc * W) + 'px'; alt.prepend(d);
@@ -1252,8 +1280,9 @@ function dropOn(t) {
     uids.forEach(u => { if (Object.values(S.place).includes(u)) { unplace(u); toTray(u); } });
   } else {
     const [sid, b, a, c] = t.k.split(':'); const sh = shelfById(sid);
+    const forma = formaDestino(t, uids);
     uids.forEach(unplace);
-    const seq = seqFrom(sh, +b, +a, +c, uids.length);
+    const seq = forma || seqFrom(sh, +b, +a, +c, uids.length);
     let bumped = 0, overflow = 0;
     uids.forEach((u, i) => {
       const k = seq[i];
@@ -1263,7 +1292,7 @@ function dropOn(t) {
       S.place[k] = u;
     });
     if (bumped) toast(`${bumped} ${bumped === 1 ? 'figura ha vuelto' : 'figuras han vuelto'} a «sin colocar»`);
-    if (overflow) toast(`No cabían ${overflow} en esta estantería: van a «sin colocar»`);
+    if (overflow) toast(forma ? `${overflow} se salían de la estantería con esa forma: van a «sin colocar»` : `No cabían ${overflow} en esta estantería: van a «sin colocar»`);
   }
   save(); render();
 }
@@ -1297,6 +1326,7 @@ document.querySelectorAll('#selbar [data-st]').forEach(b => b.onclick = () => {
   sel.forEach(u => { if (S.figs[u]) { S.figs[u].estado = b.dataset.st; if (b.dataset.st === 'vendida') { unplace(u); sel.delete(u); } } }); save(); render();
 });
 $('btnFit').onclick = fit;
+$('selExtr').onclick = () => extraerPedido([...sel].map(u => S.figs[u]));
 $('fueraBtn').onclick = fit;
 $('fueraAviso').addEventListener('pointerdown', e => e.stopPropagation());
 $('btnNew').onclick = () => openModal(null);
@@ -1423,7 +1453,9 @@ document.querySelectorAll('#fEstado button').forEach(b => b.onclick = () => { dr
 const CAMPO_INPUT = { numero: 'fNum', nombre: 'fName', serie: 'fSerie', genero: 'fGen', lanzamiento: 'fLanz', precioJPY: 'fJPY', tienda: 'fTienda', condicion: 'fCond', compra: 'fCD', estimado: 'fEst', pedido: 'fPedido', pagado: 'fPag', fechaEnvio: 'fEnvF', envio: 'fEnv', paquete: 'fPaq', fechaLlegada: 'fLlegF', aduanas: 'fAdu', ventaPide: 'fVPide', ventaPrecio: 'fVPrecio', ventaFecha: 'fVFecha' };
 const numOrNull = v => v === '' || v == null ? null : Math.round(+v * 100) / 100;
 function leerVenta() { return { ventaPide: numOrNull($('fVPide').value), ventaPrecio: numOrNull($('fVPrecio').value), ventaFecha: $('fVFecha').value, ventaDonde: $('fVDonde').value.trim() }; }
-function verVenta() { $('fVenta').classList.toggle('on', draft.estado === 'venta' || draft.estado === 'vendida' || !!($('fVPide').value || $('fVPrecio').value || $('fVFecha').value)); }
+// las Custom solo muestran número, nombre, imagen, etiquetas y notas
+function verCustom() { $('modal').classList.toggle('custom', draft.estado === 'custom'); }
+function verVenta() { verCustom(); $('fVenta').classList.toggle('on', draft.estado === 'venta' || draft.estado === 'vendida' || !!($('fVPide').value || $('fVPrecio').value || $('fVFecha').value)); }
 function drawFalta() {
   verVenta();
   const c = readCompra();
@@ -1602,7 +1634,7 @@ const LUPA_SVG = '<svg viewBox="0 0 24 24" width="9" height="9" fill="none" stro
 const tieneNota = f => !!(f.notas || '').trim();
 function stIcon(f) {
   return (tieneNota(f) ? `<span class="st lupa" title="${esc(f.notas)}">${LUPA_SVG}</span>` : '') + (faltan(f).length ? `<span class="st bang" title="Falta: ${faltan(f).join(', ')}">!</span>` : '') +
-    (f.estado === 'quiero' ? '<span class="st quiero" title="Lo quiero">♥</span>' : ICO[f.estado] ? `<span class="st" style="background:${ICO[f.estado][1]}" title="${ICO[f.estado][2]}">${ICO[f.estado][0]}</span>` : '');
+    (f.estado === 'quiero' ? '<span class="st quiero" title="Lo quiero">♥</span>' : ICO[f.estado] ? `<span class="st" style="background:${ICO[f.estado][1]};color:${ICO[f.estado][3] || '#fff'}" title="${ICO[f.estado][2]}">${ICO[f.estado][0]}</span>` : '');
 }
 function renderListas() {
   const tokens = qTokens();
@@ -2052,7 +2084,7 @@ function renderPrecio() {
 $('pPrecio').addEventListener('click', e => { const r = e.target.closest('.prow'); if (r) openModal(r.dataset.uid); });
 
 /* ===================== PEDIDOS: VISTA ANUAL POR MESES ===================== */
-const PQE = { preparando: ['📦', 'Preparando', '#8a8f98'], enviado: ['✈', 'Enviado', '#2a78d6'], aduana: ['🛃', 'En aduana', '#d98a00'], entregado: ['✓', 'Ha llegado', '#39b54a'] };
+const PQE = { preparando: ['📦', 'Preparando', '#8a8f98'], enviado: ['✈', 'Enviado', '#f9e95a', '#111'], aduana: ['🛃', 'En aduana', '#d98a00'], entregado: ['✓', 'Ha llegado', '#39b54a'] };
 // columna del paquete: el mes de llegada; si aún no ha llegado, el de envío; si no tiene fechas, el mes en que se creó
 const mesDeFecha = d => /^\d{4}-\d{2}/.test(d || '') ? d.slice(0, 7) : '';
 const colPaq = p => mesDeFecha(p.fechaLlegada) || mesDeFecha(p.fechaEnvio) || normMes(p.mes);
@@ -2123,19 +2155,19 @@ function renderPedidos() {
       <select class="pin" data-k="paquete" data-uid="${f.uid}">${opts(f.paquete || '')}</select></div></div>`;
   };
   const pcard = p => {
-    const fs = figsDe(p.id); const [ic, nm, col] = PQE[p.estado || 'preparando'];
+    const fs = figsDe(p.id); const [ic, nm, col, colTxt] = PQE[p.estado || 'preparando'];
     const envio = p.envio != null ? +p.envio : fs.reduce((s, f) => s + (+f.envio || 0), 0);
     const adu = p.aduana != null ? +p.aduana : fs.reduce((s, f) => s + (+f.aduanas || 0), 0);
     const tip = `<b>${esc(p.tracking || 'Sin tracking')}</b> · ${nm}${p.fechaEnvio ? ` · enviado ${fmtFecha(p.fechaEnvio)}` : ''}${p.fechaLlegada ? ` · llegó ${fmtFecha(p.fechaLlegada)}` : ''}${fs.map(f => `<div class="tipf">${imgSrc(f) ? `<img src="${esc(imgSrc(f))}">` : '<span class="lph">?</span>'}<div><b>${esc(f.numero || '')} ${esc(f.nombre)}</b><br><span>Pedido: ${esc(f.pedido || '—')}</span></div></div>`).join('') || '<div>Sin figuras asignadas</div>'}`;
-    return `<div class="pkc${p.estado === 'entregado' ? ' llego' : ''}" data-drag="paq" data-id="${p.id}" data-tip="${esc(tip)}">
-      <div class="pkh"><span class="pkst" style="background:${col}" title="${nm}">${ic}</span><span class="pktr">${esc(p.tracking || 'Sin tracking')}</span></div>
+    return `<div class="pkc${p.estado === 'entregado' ? ' llego' : p.estado === 'enviado' || p.estado === 'aduana' ? ' viaje' : ''}" data-drag="paq" data-id="${p.id}" data-tip="${esc(tip)}">
+      <div class="pkh"><span class="pkst" style="background:${col};color:${colTxt || '#fff'}" title="${nm}">${ic}</span><span class="pktr">${esc(p.tracking || 'Sin tracking')}</span></div>
       <small>${esc(p.transportista || '')}${p.fechaEnvio ? (p.transportista ? ' · ' : '') + 'enviado ' + fmtFecha(p.fechaEnvio) : ''}</small>
       <div class="pkth">${fs.slice(0, 10).map(f => imgSrc(f) ? `<img src="${esc(imgSrc(f))}" referrerpolicy="no-referrer" draggable="false">` : '<span class="lph">?</span>').join('')}</div>
       <div class="pkn"><div class="r"><span>Figuras (${fs.length})</span><b>${eur(fs.reduce((s, f) => s + (+f.pagado || 0), 0))}</b></div><div class="r"><span>Envío${p.repartirEnvio ? ' · repartido' : ''}</span><b>${eur(envio)}</b></div><div class="r"><span>Aduana${p.repartir ? ' · repartida' : ''}</span><b>${eur(adu)}</b></div></div>
       <button class="llegbtn" data-lleg="${p.id}">${p.estado === 'entregado' ? (p.fechaLlegada ? `✓ Llegó el ${fmtFecha(p.fechaLlegada)}` : '✓ ¡Paquete recibido!') : 'Marcar que ha llegado'}</button></div>`;
   };
   // ticket en el mes de envío de un paquete que llegó otro mes: lleva a él
-  const ptick = p => `<div class="pticket" data-paq="${p.id}" title="Abrir el paquete"><span class="pkst" style="background:#2a78d6">✈</span><div><b>${esc(p.tracking || 'Sin tracking')}</b><small>enviado ${fmtFecha(p.fechaEnvio)} · llegó en ${mesNombre(mesDeFecha(p.fechaLlegada))}</small></div><span class="ptv">${eur(envioDePaq(p))}<small>envío</small></span></div>`;
+  const ptick = p => `<div class="pticket" data-paq="${p.id}" title="Abrir el paquete"><span class="pkst" style="background:#f9e95a;color:#111">✈</span><div><b>${esc(p.tracking || 'Sin tracking')}</b><small>enviado ${fmtFecha(p.fechaEnvio)} · llegó en ${mesNombre(mesDeFecha(p.fechaLlegada))}</small></div><span class="ptv">${eur(envioDePaq(p))}<small>envío</small></span></div>`;
   const cols = MESES.map((n, i) => {
     const ym = `${pedYear}-${String(i + 1).padStart(2, '0')}`;
     const fs = all.filter(f => (f.compra || '').startsWith(ym)).sort(cmpFig);
@@ -2278,7 +2310,7 @@ function openPaq(id) {
       <small>Sustituye lo que tengan en su ficha y se recalcula si cambias el importe o las figuras.</small></div>
     </div>
     <div class="f" style="margin-top:10px"><label>Notas</label><input id="qNo" value="${esc(p.notas || '')}"></div>
-    <div class="fsec" style="margin:16px 0 6px">Figuras del paquete <span id="qN"></span></div>
+    <div class="fsec" style="margin:16px 0 6px;display:flex;align-items:center">Figuras del paquete <span id="qN" style="margin-left:4px"></span><span class="spacer"></span><button type="button" class="btn" id="qExtr" style="text-transform:none;letter-spacing:0;font-size:12px;padding:5px 12px">📋 Extraer info para pedido</button></div>
     <div class="qfigs" id="qFigs"></div>
     <div class="qbusca"><input id="qQ" placeholder="Añadir figura: escribe nº, nombre, tienda o nº de pedido…" autocomplete="off"><div class="qres" id="qRes"></div></div>
     <div class="modal-foot">
@@ -2315,6 +2347,7 @@ function openPaq(id) {
     const r = e.target.closest('.qf[data-u]'); if (r) { $('modalBg').classList.add('sobrepop'); openModal(r.dataset.u); }
   });
   pintaSel();
+  $('qExtr').onclick = () => extraerPedido([...qSel].map(u => S.figs[u]));
   let est = p.estado || 'preparando';
   $('qLl').addEventListener('change', () => { if ($('qLl').value) { est = 'entregado'; document.querySelectorAll('#qEst button').forEach(x => x.classList.toggle('on', x.dataset.st === 'entregado')); } });
   document.querySelectorAll('#qEst button').forEach(b => b.onclick = () => { est = b.dataset.st; document.querySelectorAll('#qEst button').forEach(x => x.classList.toggle('on', x === b)); });
@@ -2360,12 +2393,15 @@ async function copiarTexto(txt) {
   try { await navigator.clipboard.writeText(txt); return true; }
   catch (e) { const ta = document.createElement('textarea'); ta.value = txt; document.body.appendChild(ta); ta.select(); let ok = false; try { ok = document.execCommand('copy'); } catch (_) {} ta.remove(); return ok; }
 }
-$('fCopy').onclick = async () => {
-  const ped = $('fPedido').value.trim(), nom = ($('fName').value.trim()).replace(/^Nendoroid\s*/i, '');
-  if (!ped) toast('Esta figura no tiene nº de pedido: copio solo el nombre');
-  const txt = ped ? `${ped} - ${nom}` : nom;
-  if (await copiarTexto(txt)) { if (ped) toast('Copiado: ' + txt); } else avisar('No he podido copiar. Texto: ' + txt);
-};
+// «Nº de pedido - Nombre», una línea por figura
+const lineaPedido = f => `${f.pedido ? f.pedido + ' - ' : ''}${(f.nombre || '').replace(/^Nendoroid\s*/i, '')}`;
+async function extraerPedido(figs) {
+  figs = figs.filter(Boolean).sort(cmpFig);
+  if (!figs.length) { toast('No hay figuras'); return; }
+  const txt = figs.map(lineaPedido).join('\n'), sin = figs.filter(f => !f.pedido).length;
+  if (await copiarTexto(txt)) toast(`Copiadas ${figs.length} ${figs.length === 1 ? 'línea' : 'líneas'}${sin ? ` (${sin} sin nº de pedido)` : ''}`);
+  else avisar('No he podido copiar. Texto:\n' + txt);
+}
 
 /* ===================== SUPABASE: LOGIN Y SINCRONIZACIÓN ===================== */
 const SUPA_URL = 'https://sxpbsekgijvanylhqyaf.supabase.co';
